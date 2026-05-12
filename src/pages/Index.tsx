@@ -15,6 +15,7 @@ import { OrdersView } from "@/components/views/OrdersView";
 import { DriverOrdersView } from "@/components/views/DriverOrdersView";
 import { DriverEarningsView } from "@/components/views/DriverEarningsView";
 import { BottomNav } from "@/components/ui/BottomNav";
+import { supabase } from "@/integrations/supabase/client";
 
 export type RideType = "moto" | "toktok" | null;
 export type ActiveView = "home" | "food" | "market" | "wallet" | "profile" | "orders";
@@ -30,6 +31,7 @@ const Index = () => {
     pickupCoords: [number, number];
     destCoords?: [number, number];
     fare: number;
+    holdId?: string | null;
   } | null>(null);
   const [showScanner, setShowScanner] = useState(false);
 
@@ -133,9 +135,28 @@ const Index = () => {
           <RideBooking
             type={bookingRide}
             onClose={() => setBookingRide(null)}
-            onBook={(trip) => {
-              setActiveTrip({ mode: bookingRide, ...trip });
+            onBook={async (trip) => {
+              const { data: sess } = await supabase.auth.getSession();
+              if (!sess.session) {
+                toast({ title: "Connexion requise", description: "Connectez-vous pour réserver." });
+                return;
+              }
+              const holdAmount = Math.ceil(trip.fare * 1.1);
+              const { data, error } = await supabase.rpc("wallet_hold", {
+                p_amount_gnf: holdAmount,
+                p_reference: null,
+                p_description: `Réservation ${bookingRide}`,
+              });
+              if (error) {
+                toast({ title: "Solde insuffisant", description: error.message });
+                return;
+              }
+              setActiveTrip({ mode: bookingRide, ...trip, holdId: (data as { id: string }).id });
               setBookingRide(null);
+              toast({
+                title: "Fonds réservés",
+                description: `${new Intl.NumberFormat("fr-GN").format(holdAmount)} GNF bloqués jusqu'à la fin de course.`,
+              });
             }}
           />
         )}
@@ -145,6 +166,7 @@ const Index = () => {
             pickupCoords={activeTrip.pickupCoords}
             destCoords={activeTrip.destCoords}
             fare={activeTrip.fare}
+            holdId={activeTrip.holdId}
             onClose={() => {
               setActiveTrip(null);
               setActiveView("orders");
