@@ -4,6 +4,7 @@ import { WalletCard } from "@/components/home/WalletCard";
 import { QuickActions } from "@/components/home/QuickActions";
 import { PromoCarousel } from "@/components/home/PromoCarousel";
 import { RestaurantCard } from "@/components/food/RestaurantCard";
+import logo from "@/assets/logo.png";
 
 interface UserHomeProps {
   onActionClick: (action: string) => void;
@@ -39,9 +40,12 @@ export function UserHome({ onActionClick, onToggleDriverMode }: UserHomeProps) {
         className="gradient-hero text-primary-foreground px-4 pt-6 pb-8 rounded-b-3xl"
       >
         <div className="flex items-center justify-between mb-6">
-          <div>
-            <p className="text-sm opacity-80">Bonjour 👋</p>
-            <h1 className="text-xl font-bold">Bienvenue sur Chop Chop</h1>
+          <div className="flex items-center gap-3">
+            <img src={logo} alt="CHOP CHOP" className="w-12 h-12 rounded-xl bg-white/95 p-1 object-contain" />
+            <div>
+              <h1 className="text-xl font-bold leading-tight">CHOP CHOP</h1>
+              <p className="text-xs opacity-90 italic">Tout, Partout, Pour Tous</p>
+            </div>
           </div>
           <div className="flex items-center gap-2">
             <button
