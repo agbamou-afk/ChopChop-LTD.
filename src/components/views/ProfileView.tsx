@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { Link } from "react-router-dom";
 import {
   User,
   Settings,
@@ -9,6 +10,7 @@ import {
   Star,
   Car,
   Gift,
+  ShieldCheck,
 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 
