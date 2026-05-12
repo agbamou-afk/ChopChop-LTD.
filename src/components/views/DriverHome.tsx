@@ -1,22 +1,24 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { Power } from "lucide-react";
-import { useState } from "react";
+import { Power, BellRing } from "lucide-react";
+import { useEffect, useState } from "react";
 import { DriverDashboard } from "@/components/driver/DriverDashboard";
-import { OrderRequest } from "@/components/driver/OrderRequest";
+import { IncomingRequestPopup, type IncomingRequest } from "@/components/driver/IncomingRequestPopup";
 import { AppHeader } from "@/components/ui/AppHeader";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 
 interface DriverHomeProps {
   onToggleDriverMode: () => void;
 }
 
-const mockOrders = [
+const mockOrders: IncomingRequest[] = [
   {
     id: "1",
     type: "ride" as const,
     pickup: "Marché Madina, Conakry",
     destination: "Aéroport International",
     customerName: "Amadou Diallo",
+    customerRating: 4.7,
     estimatedPrice: 45000,
     distance: "12 km",
     eta: "25 min",
@@ -27,24 +29,56 @@ const mockOrders = [
     pickup: "Restaurant Chez Mama",
     destination: "Kipé Dadia",
     customerName: "Mariama Bah",
+    customerRating: 4.9,
     estimatedPrice: 25000,
     distance: "5 km",
     eta: "15 min",
+  },
+  {
+    id: "3",
+    type: "delivery" as const,
+    pickup: "Carrefour Hamdallaye",
+    destination: "Rond-point Bambeto",
+    customerName: "Ousmane Bah",
+    customerRating: 4.6,
+    estimatedPrice: 18000,
+    distance: "4 km",
+    eta: "12 min",
   },
 ];
 
 export function DriverHome({ onToggleDriverMode }: DriverHomeProps) {
   const [isOnline, setIsOnline] = useState(true);
-  const [orders, setOrders] = useState(mockOrders);
+  const [queue, setQueue] = useState<IncomingRequest[]>(mockOrders);
+  const [current, setCurrent] = useState<IncomingRequest | null>(null);
 
-  const handleAcceptOrder = (id: string) => {
-    setOrders(orders.filter((o) => o.id !== id));
+  // Auto-pop next request when online and idle
+  useEffect(() => {
+    if (!isOnline || current || queue.length === 0) return;
+    const t = setTimeout(() => {
+      setCurrent(queue[0]);
+      setQueue((q) => q.slice(1));
+    }, 2500);
+    return () => clearTimeout(t);
+  }, [isOnline, current, queue]);
+
+  const handleAccept = (id: string) => {
+    setCurrent(null);
     toast.success("Course acceptée ! En route vers le client.");
   };
 
-  const handleDeclineOrder = (id: string) => {
-    setOrders(orders.filter((o) => o.id !== id));
+  const handleDecline = (id: string) => {
+    setCurrent(null);
     toast.info("Course refusée");
+  };
+
+  const triggerNext = () => {
+    if (queue.length === 0) {
+      toast.info("Aucune demande en attente");
+      return;
+    }
+    setCurrent(queue[0]);
+    setQueue((q) => q.slice(1));
   };
 
   return (
@@ -55,7 +89,7 @@ export function DriverHome({ onToggleDriverMode }: DriverHomeProps) {
         subtitle="Tableau de bord chauffeur"
         amountLabel="Gains du jour"
         amountValue={185000}
-        notificationCount={orders.length}
+        notificationCount={queue.length + (current ? 1 : 0)}
       />
 
       {/* Content */}
@@ -83,45 +117,36 @@ export function DriverHome({ onToggleDriverMode }: DriverHomeProps) {
           onlineHours={6}
         />
 
-        {/* Pending orders */}
-        {isOnline && orders.length > 0 && (
-          <section>
-            <h2 className="text-lg font-semibold text-foreground mb-4">
-              Nouvelles demandes ({orders.length})
-            </h2>
-            <div className="space-y-3">
-              <AnimatePresence>
-                {orders.map((order) => (
-                  <OrderRequest
-                    key={order.id}
-                    order={order}
-                    onAccept={handleAcceptOrder}
-                    onDecline={handleDeclineOrder}
-                  />
-                ))}
-              </AnimatePresence>
-            </div>
-          </section>
-        )}
-
-        {isOnline && orders.length === 0 && (
+        {isOnline && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="text-center py-12"
+            className="text-center py-8"
           >
             <div className="w-20 h-20 rounded-full bg-muted mx-auto flex items-center justify-center mb-4">
-              <Power className="w-10 h-10 text-muted-foreground" />
+              <BellRing className="w-10 h-10 text-muted-foreground" />
             </div>
             <h3 className="text-lg font-semibold text-foreground mb-2">
-              En attente de courses
+              {queue.length > 0 ? `${queue.length} demande(s) en file` : "En attente de courses"}
             </h3>
-            <p className="text-muted-foreground text-sm">
+            <p className="text-muted-foreground text-sm mb-4">
               Les nouvelles demandes apparaîtront ici
             </p>
+            {queue.length > 0 && (
+              <Button onClick={triggerNext} variant="outline" className="h-11">
+                <BellRing className="w-4 h-4 mr-2" /> Voir la demande suivante
+              </Button>
+            )}
           </motion.div>
         )}
       </div>
+
+      <IncomingRequestPopup
+        request={current}
+        onAccept={handleAccept}
+        onDecline={handleDecline}
+        timeoutSec={20}
+      />
     </div>
   );
 }
