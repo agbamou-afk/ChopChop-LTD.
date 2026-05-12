@@ -7,6 +7,7 @@ import QRCode from "react-qr-code";
 import { Loader2, Phone, MessageCircle, Star, ScanLine, CheckCircle2, X, QrCode } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 import { QrScanner } from "@/components/scanner/QrScanner";
 import { RatingPrompt } from "@/components/tracking/RatingPrompt";
 
@@ -18,6 +19,7 @@ interface LiveTrackingProps {
   destCoords?: [number, number] | null;
   fare: number;
   onClose: () => void;
+  holdId?: string | null;
 }
 
 const MODE_LABELS: Record<TrackingMode, { title: string; emoji: string }> = {
@@ -68,7 +70,7 @@ const DRIVERS = [
   { name: "Aïssatou Barry", rating: 4.95, plate: "RC-1051-C", trips: 2104 },
 ];
 
-export function LiveTracking({ mode, pickupCoords, destCoords, fare, onClose }: LiveTrackingProps) {
+export function LiveTracking({ mode, pickupCoords, destCoords, fare, onClose, holdId }: LiveTrackingProps) {
   const [phase, setPhase] = useState<Phase>("searching");
   const [driverPos, setDriverPos] = useState<[number, number]>(() => [
     pickupCoords[0] + (Math.random() - 0.5) * 0.012,
@@ -78,6 +80,7 @@ export function LiveTracking({ mode, pickupCoords, destCoords, fare, onClose }: 
   const [showScanner, setShowScanner] = useState<null | "start" | "end">(null);
   const [showDriverQR, setShowDriverQR] = useState<null | "start" | "end">(null);
   const tickRef = useRef<number | null>(null);
+  const settledRef = useRef(false);
 
   const driver = useMemo(() => DRIVERS[Math.floor(Math.random() * DRIVERS.length)], []);
   const driverEmoji = mode === "moto" ? "🛵" : mode === "toktok" ? "🛺" : "🛵";
@@ -180,13 +183,40 @@ export function LiveTracking({ mode, pickupCoords, destCoords, fare, onClose }: 
   };
 
   const handleRatingSubmit = (rating: number, review: string) => {
-    setPhase("completed");
-    toast({
-      title: "Transaction validée",
-      description: `${fmt(fare)} GNF débité · Note ${rating.toFixed(2)}★`,
-    });
-    // review captured for future API call
     void review;
+    (async () => {
+      if (holdId && !settledRef.current) {
+        settledRef.current = true;
+        const { error } = await supabase.rpc("wallet_capture", {
+          p_hold_id: holdId,
+          p_to_user_id: null,
+          p_to_party_type: "master",
+          p_actual_amount_gnf: Math.round(fare),
+          p_description: `Course ${MODE_LABELS[mode].title}`,
+        });
+        if (error) {
+          toast({ title: "Paiement échoué", description: error.message });
+          return;
+        }
+      }
+      setPhase("completed");
+      toast({
+        title: "Transaction validée",
+        description: `${fmt(fare)} GNF débité · Note ${rating.toFixed(2)}★`,
+      });
+    })();
+  };
+
+  const handleClose = async () => {
+    if (holdId && !settledRef.current && phase !== "completed") {
+      settledRef.current = true;
+      await supabase.rpc("wallet_release", {
+        p_hold_id: holdId,
+        p_reason: "Course annulée",
+      });
+      toast({ title: "Réservation libérée", description: "Aucun montant débité." });
+    }
+    onClose();
   };
 
   const driverFar: [number, number] = driverPos;
@@ -201,7 +231,7 @@ export function LiveTracking({ mode, pickupCoords, destCoords, fare, onClose }: 
       {/* Header */}
       <div className="gradient-primary px-4 py-3 flex items-center justify-between">
         <button
-          onClick={onClose}
+          onClick={handleClose}
           className="p-2 rounded-full bg-white/20 hover:bg-white/30 transition"
           aria-label="Fermer"
         >
