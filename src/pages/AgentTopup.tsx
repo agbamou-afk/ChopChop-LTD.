@@ -415,9 +415,10 @@ export default function AgentTopup() {
 
       {scanOpen && (
         <QrScanner
-          open={scanOpen}
           onClose={() => setScanOpen(false)}
-          onDecode={handleScan}
+          onResult={handleScan}
+          title="Scanner le QR du client"
+          subtitle="Positionnez le QR du client dans le cadre"
         />
       )}
     </div>
