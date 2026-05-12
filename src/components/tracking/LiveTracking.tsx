@@ -3,9 +3,12 @@ import { motion, AnimatePresence } from "framer-motion";
 import { MapContainer, TileLayer, Marker, Polyline, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-import { Loader2, Phone, MessageCircle, Star, ScanLine, CheckCircle2, X, Camera } from "lucide-react";
+import QRCode from "react-qr-code";
+import { Loader2, Phone, MessageCircle, Star, ScanLine, CheckCircle2, X, QrCode } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
+import { QrScanner } from "@/components/scanner/QrScanner";
+import { RatingPrompt } from "@/components/tracking/RatingPrompt";
 
 export type TrackingMode = "moto" | "toktok" | "food";
 
@@ -47,7 +50,17 @@ function FitTo({ a, b }: { a: [number, number]; b: [number, number] }) {
   return null;
 }
 
-type Phase = "searching" | "assigned" | "enroute" | "arrived" | "scanning" | "completed";
+type Phase =
+  | "searching"
+  | "assigned"
+  | "enroute"
+  | "arrived"
+  | "startScan"
+  | "inTrip"
+  | "atDestination"
+  | "endScan"
+  | "rating"
+  | "completed";
 
 const DRIVERS = [
   { name: "Mamadou Camara", rating: 4.9, plate: "RC-2384-A", trips: 1284 },
@@ -62,13 +75,25 @@ export function LiveTracking({ mode, pickupCoords, destCoords, fare, onClose }: 
     pickupCoords[1] + (Math.random() - 0.5) * 0.012,
   ]);
   const [etaSec, setEtaSec] = useState(180);
-  const [scanCode, setScanCode] = useState("");
+  const [showScanner, setShowScanner] = useState<null | "start" | "end">(null);
+  const [showDriverQR, setShowDriverQR] = useState<null | "start" | "end">(null);
   const tickRef = useRef<number | null>(null);
 
   const driver = useMemo(() => DRIVERS[Math.floor(Math.random() * DRIVERS.length)], []);
   const driverEmoji = mode === "moto" ? "🛵" : mode === "toktok" ? "🛺" : "🛵";
   const driverIcon = useMemo(() => makeDriverIcon(driverEmoji), [driverEmoji]);
-  const expectedCode = useMemo(() => `CHOP-${driver.plate.replace(/-/g, "")}`, [driver.plate]);
+  const tripId = useMemo(
+    () => Math.random().toString(36).slice(2, 8).toUpperCase(),
+    [],
+  );
+  const startCode = useMemo(
+    () => `CHOP-START-${driver.plate.replace(/-/g, "")}-${tripId}`,
+    [driver.plate, tripId],
+  );
+  const endCode = useMemo(
+    () => `CHOP-END-${driver.plate.replace(/-/g, "")}-${tripId}`,
+    [driver.plate, tripId],
+  );
 
   // Searching → assigned
   useEffect(() => {
@@ -99,6 +124,33 @@ export function LiveTracking({ mode, pickupCoords, destCoords, fare, onClose }: 
     };
   }, [phase, pickupCoords]);
 
+  // In-trip simulation: drive from pickup → destination (or timer if no dest)
+  useEffect(() => {
+    if (phase !== "inTrip") return;
+    setEtaSec(240);
+    const target = destCoords ?? [
+      pickupCoords[0] + 0.01,
+      pickupCoords[1] + 0.01,
+    ] as [number, number];
+    tickRef.current = window.setInterval(() => {
+      setDriverPos((p) => {
+        const [lat, lng] = p;
+        const dLat = target[0] - lat;
+        const dLng = target[1] - lng;
+        const dist = Math.hypot(dLat, dLng);
+        if (dist < 0.0003) {
+          setPhase("atDestination");
+          return target;
+        }
+        return [lat + dLat * 0.06, lng + dLng * 0.06];
+      });
+      setEtaSec((s) => Math.max(0, s - 5));
+    }, 1000);
+    return () => {
+      if (tickRef.current) clearInterval(tickRef.current);
+    };
+  }, [phase, pickupCoords, destCoords]);
+
   const formatEta = (s: number) => {
     const m = Math.floor(s / 60);
     const r = s % 60;
@@ -107,14 +159,34 @@ export function LiveTracking({ mode, pickupCoords, destCoords, fare, onClose }: 
 
   const fmt = (n: number) => new Intl.NumberFormat("fr-GN").format(Math.round(n));
 
-  const handleScanConfirm = () => {
-    // Accept any code matching pattern; otherwise tell user
-    if (scanCode.trim() && scanCode.trim().toUpperCase() !== expectedCode) {
-      toast({ title: "QR invalide", description: "Le code ne correspond pas à votre chauffeur." });
-      return;
+  const handleScanResult = (text: string) => {
+    const code = text.trim().toUpperCase();
+    if (showScanner === "start") {
+      if (code !== startCode.toUpperCase()) {
+        toast({ title: "QR invalide", description: "Ce code ne correspond pas au démarrage de votre course." });
+        return;
+      }
+      setShowScanner(null);
+      setPhase("inTrip");
+      toast({ title: "Course démarrée", description: "Bon voyage avec CHOP CHOP." });
+    } else if (showScanner === "end") {
+      if (code !== endCode.toUpperCase()) {
+        toast({ title: "QR invalide", description: "Ce code ne correspond pas à la fin de course." });
+        return;
+      }
+      setShowScanner(null);
+      setPhase("rating");
     }
+  };
+
+  const handleRatingSubmit = (rating: number, review: string) => {
     setPhase("completed");
-    toast({ title: "Transaction validée", description: `${fmt(fare)} GNF débité du portefeuille.` });
+    toast({
+      title: "Transaction validée",
+      description: `${fmt(fare)} GNF débité · Note ${rating.toFixed(2)}★`,
+    });
+    // review captured for future API call
+    void review;
   };
 
   const driverFar: [number, number] = driverPos;
@@ -150,9 +222,12 @@ export function LiveTracking({ mode, pickupCoords, destCoords, fare, onClose }: 
           />
           <Marker position={pickupCoords} icon={clientIcon} />
           {phase !== "searching" && <Marker position={driverFar} icon={driverIcon} />}
-          {phase === "enroute" && (
+          {(phase === "enroute" || phase === "inTrip") && (
             <Polyline
-              positions={[driverFar, pickupCoords]}
+              positions={[
+                driverFar,
+                phase === "inTrip" && destCoords ? destCoords : pickupCoords,
+              ]}
               pathOptions={{ color: "hsl(138, 64%, 39%)", weight: 4, opacity: 0.7, dashArray: "6 8" }}
             />
           )}
@@ -165,7 +240,11 @@ export function LiveTracking({ mode, pickupCoords, destCoords, fare, onClose }: 
           {phase === "assigned" && "Chauffeur trouvé"}
           {phase === "enroute" && `Arrivée dans ${formatEta(etaSec)}`}
           {phase === "arrived" && "Le chauffeur est arrivé"}
-          {phase === "scanning" && "Scannez le QR du chauffeur"}
+          {phase === "startScan" && "Scannez le QR de départ"}
+          {phase === "inTrip" && `Destination dans ${formatEta(etaSec)}`}
+          {phase === "atDestination" && "Vous êtes arrivés"}
+          {phase === "endScan" && "Scannez le QR de fin"}
+          {phase === "rating" && "Notez votre course"}
           {phase === "completed" && "Course terminée"}
         </div>
       </div>
@@ -194,7 +273,7 @@ export function LiveTracking({ mode, pickupCoords, destCoords, fare, onClose }: 
             </motion.div>
           )}
 
-          {(phase === "assigned" || phase === "enroute" || phase === "arrived") && (
+          {(phase === "assigned" || phase === "enroute" || phase === "arrived" || phase === "inTrip" || phase === "atDestination") && (
             <motion.div
               key="driver"
               initial={{ opacity: 0, y: 20 }}
@@ -218,7 +297,7 @@ export function LiveTracking({ mode, pickupCoords, destCoords, fare, onClose }: 
                 <div className="text-right">
                   <p className="text-lg font-bold text-foreground">{fmt(fare)} GNF</p>
                   <p className="text-xs text-muted-foreground">
-                    {phase === "arrived" ? "À régler" : "Tarif fixe"}
+                    {phase === "atDestination" ? "À régler" : "Tarif fixe"}
                   </p>
                 </div>
               </div>
@@ -242,53 +321,51 @@ export function LiveTracking({ mode, pickupCoords, destCoords, fare, onClose }: 
               )}
 
               {phase === "arrived" && (
-                <Button
-                  onClick={() => setPhase("scanning")}
-                  className="w-full h-12 mt-3 gradient-primary"
-                >
-                  <ScanLine className="w-5 h-5 mr-2" /> Scanner le QR du chauffeur
-                </Button>
+                <div className="grid grid-cols-1 gap-2 mt-3">
+                  <Button
+                    onClick={() => {
+                      setPhase("startScan");
+                      setShowScanner("start");
+                    }}
+                    className="w-full h-12 gradient-primary"
+                  >
+                    <ScanLine className="w-5 h-5 mr-2" /> Scanner le QR de départ
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowDriverQR("start")}
+                    className="w-full h-10"
+                  >
+                    <QrCode className="w-4 h-4 mr-2" /> Voir le QR du chauffeur (démo)
+                  </Button>
+                </div>
+              )}
+
+              {phase === "atDestination" && (
+                <div className="grid grid-cols-1 gap-2 mt-3">
+                  <Button
+                    onClick={() => {
+                      setPhase("endScan");
+                      setShowScanner("end");
+                    }}
+                    className="w-full h-12 gradient-primary"
+                  >
+                    <ScanLine className="w-5 h-5 mr-2" /> Scanner le QR de fin
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowDriverQR("end")}
+                    className="w-full h-10"
+                  >
+                    <QrCode className="w-4 h-4 mr-2" /> Voir le QR du chauffeur (démo)
+                  </Button>
+                </div>
               )}
             </motion.div>
           )}
 
-          {phase === "scanning" && (
-            <motion.div
-              key="scan"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-            >
-              <div className="text-center mb-3">
-                <p className="font-semibold text-foreground">Confirmer la prise en charge</p>
-                <p className="text-xs text-muted-foreground">
-                  Scannez le code QR affiché par {driver.name}
-                </p>
-              </div>
-
-              <div className="relative mx-auto w-56 h-56 rounded-2xl bg-muted overflow-hidden flex items-center justify-center mb-4">
-                <Camera className="w-12 h-12 text-muted-foreground/50" />
-                <div className="absolute inset-4 border-2 border-primary rounded-xl" />
-                <motion.div
-                  initial={{ y: 0 }}
-                  animate={{ y: [0, 180, 0] }}
-                  transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
-                  className="absolute left-4 right-4 h-0.5 bg-primary shadow-[0_0_8px_hsl(var(--primary))]"
-                />
-              </div>
-
-              <input
-                type="text"
-                value={scanCode}
-                onChange={(e) => setScanCode(e.target.value)}
-                placeholder={`ou saisir le code (${expectedCode})`}
-                className="w-full bg-muted rounded-xl px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none mb-3"
-              />
-
-              <Button onClick={handleScanConfirm} className="w-full h-12 gradient-primary">
-                <CheckCircle2 className="w-5 h-5 mr-2" /> Valider et payer {fmt(fare)} GNF
-              </Button>
-            </motion.div>
+          {phase === "rating" && (
+            <RatingPrompt driverName={driver.name} onSubmit={handleRatingSubmit} />
           )}
 
           {phase === "completed" && (
@@ -312,6 +389,45 @@ export function LiveTracking({ mode, pickupCoords, destCoords, fare, onClose }: 
           )}
         </AnimatePresence>
       </motion.div>
+
+      {/* Camera scanner overlay */}
+      {showScanner && (
+        <QrScanner
+          title={showScanner === "start" ? "Scanner le QR de départ" : "Scanner le QR de fin"}
+          subtitle={`Chauffeur ${driver.name} · ${driver.plate}`}
+          expectedHint={showScanner === "start" ? startCode : endCode}
+          onResult={handleScanResult}
+          onClose={() => {
+            setShowScanner(null);
+            // revert to previous step if cancelled
+            setPhase((p) => (p === "startScan" ? "arrived" : p === "endScan" ? "atDestination" : p));
+          }}
+        />
+      )}
+
+      {/* Demo driver QR (would normally be on the driver phone) */}
+      {showDriverQR && (
+        <div
+          className="fixed inset-0 z-[55] bg-black/70 flex items-center justify-center p-6"
+          onClick={() => setShowDriverQR(null)}
+        >
+          <div className="bg-card rounded-2xl p-6 max-w-xs w-full text-center" onClick={(e) => e.stopPropagation()}>
+            <p className="text-xs text-muted-foreground mb-1">Écran chauffeur (démo)</p>
+            <p className="font-semibold text-foreground mb-4">
+              QR {showDriverQR === "start" ? "de départ" : "de fin"}
+            </p>
+            <div className="bg-white p-3 rounded-xl inline-block">
+              <QRCode value={showDriverQR === "start" ? startCode : endCode} size={180} />
+            </div>
+            <p className="text-[10px] text-muted-foreground mt-3 break-all">
+              {showDriverQR === "start" ? startCode : endCode}
+            </p>
+            <Button variant="outline" className="w-full mt-4" onClick={() => setShowDriverQR(null)}>
+              Fermer
+            </Button>
+          </div>
+        </div>
+      )}
     </motion.div>
   );
 }
