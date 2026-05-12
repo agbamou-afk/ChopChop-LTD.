@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { useState } from "react";
 import logo from "@/assets/logo.png";
 
 interface SplashScreenProps {
@@ -6,12 +7,19 @@ interface SplashScreenProps {
 }
 
 export function SplashScreen({ onFinish }: SplashScreenProps) {
+  const [introDone, setIntroDone] = useState(false);
+  const words = [
+    { text: "Tout.", color: "text-destructive" },
+    { text: "Partout.", color: "text-secondary" },
+    { text: "Pour Tous.", color: "text-primary" },
+  ];
+  const introTotal = 0.6 + words.length * 0.45 + 0.4;
   return (
     <motion.div
       initial={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.4 }}
-      className="fixed inset-0 z-[100] bg-background flex flex-col items-center justify-between py-16 px-6 overflow-hidden"
+      className="fixed inset-0 z-[100] bg-white flex flex-col items-center justify-between py-16 px-6 overflow-hidden"
     >
       {/* Soft radial glow to blend logo into background */}
       <div
@@ -71,28 +79,41 @@ export function SplashScreen({ onFinish }: SplashScreenProps) {
       <div className="flex-1 relative" />
 
       {/* Bottom slogan */}
-      <div className="w-full relative">
-        <div className="flex items-center justify-center gap-2 text-base sm:text-lg font-extrabold uppercase tracking-wide">
-          {[
-            { text: "Tout.", color: "text-destructive" },
-            { text: "Partout.", color: "text-secondary" },
-            { text: "Pour Tous.", color: "text-primary" },
-          ].map((word, i) => (
-            <motion.span
-              key={word.text}
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{
-                duration: 0.45,
-                ease: "easeOut",
-                delay: 0.6 + i * 0.45,
-              }}
-              className={word.color}
+      <div className="w-full relative overflow-hidden">
+        {!introDone ? (
+          <motion.div
+            className="flex items-center justify-center gap-2 text-base sm:text-lg font-extrabold uppercase tracking-wide"
+            onAnimationComplete={() => setTimeout(() => setIntroDone(true), introTotal * 1000)}
+          >
+            {words.map((word, i) => (
+              <motion.span
+                key={word.text}
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.45, ease: "easeOut", delay: 0.6 + i * 0.45 }}
+                className={word.color}
+              >
+                {word.text}
+              </motion.span>
+            ))}
+          </motion.div>
+        ) : (
+          <div className="flex whitespace-nowrap">
+            <motion.div
+              className="flex shrink-0 gap-2 text-base sm:text-lg font-extrabold uppercase tracking-wide pr-2"
+              animate={{ x: ["0%", "-100%"] }}
+              transition={{ duration: 12, ease: "linear", repeat: Infinity }}
             >
-              {word.text}
-            </motion.span>
-          ))}
-        </div>
+              {Array.from({ length: 6 }).map((_, k) => (
+                <span key={k} className="flex gap-2 pr-6">
+                  {words.map((w) => (
+                    <span key={w.text} className={w.color}>{w.text}</span>
+                  ))}
+                </span>
+              ))}
+            </motion.div>
+          </div>
+        )}
       </div>
     </motion.div>
   );
