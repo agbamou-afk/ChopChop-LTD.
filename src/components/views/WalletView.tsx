@@ -1,49 +1,20 @@
 import { motion } from "framer-motion";
-import { ArrowUpRight, ArrowDownLeft, History, CreditCard, QrCode, Plus } from "lucide-react";
+import { Link } from "react-router-dom";
+import {
+  ArrowUpRight,
+  ArrowDownLeft,
+  History,
+  CreditCard,
+  QrCode,
+  Plus,
+  Loader2,
+  LogIn,
+  ShieldCheck,
+} from "lucide-react";
 import { WalletCard } from "@/components/home/WalletCard";
-
-const transactions = [
-  {
-    id: 1,
-    type: "out" as const,
-    title: "Course Moto",
-    description: "Madina → Kipé",
-    amount: -15000,
-    date: "Aujourd'hui, 14:30",
-  },
-  {
-    id: 2,
-    type: "in" as const,
-    title: "Reçu de Amadou",
-    description: "Remboursement",
-    amount: 50000,
-    date: "Aujourd'hui, 10:15",
-  },
-  {
-    id: 3,
-    type: "out" as const,
-    title: "Commande repas",
-    description: "Chez Mama Fatoumata",
-    amount: -35000,
-    date: "Hier, 19:45",
-  },
-  {
-    id: 4,
-    type: "in" as const,
-    title: "Recharge portefeuille",
-    description: "Orange Money",
-    amount: 200000,
-    date: "Hier, 08:00",
-  },
-  {
-    id: 5,
-    type: "out" as const,
-    title: "Achat Marché",
-    description: "Smartphone case",
-    amount: -25000,
-    date: "20 Jan, 16:20",
-  },
-];
+import { useWallet, type WalletTransaction } from "@/hooks/useWallet";
+import { PinSetup } from "@/components/wallet/PinSetup";
+import { Button } from "@/components/ui/button";
 
 const quickActions = [
   { id: "send", icon: ArrowUpRight, label: "Envoyer", color: "gradient-primary" },
@@ -52,9 +23,67 @@ const quickActions = [
   { id: "add", icon: Plus, label: "Recharger", color: "bg-primary" },
 ];
 
+const TX_LABEL: Record<string, string> = {
+  topup: "Recharge",
+  payment: "Paiement",
+  refund: "Remboursement",
+  commission: "Commission",
+  payout: "Versement",
+  hold: "Réservation",
+  capture: "Débit",
+  release: "Libération",
+  transfer: "Transfert",
+  adjustment: "Ajustement",
+};
+
+function formatMoney(amount: number) {
+  return new Intl.NumberFormat("fr-GN").format(Math.abs(amount));
+}
+
+function formatDate(iso: string) {
+  const d = new Date(iso);
+  return d.toLocaleString("fr-FR", {
+    day: "2-digit",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+function txDirection(tx: WalletTransaction, walletId: string): "in" | "out" {
+  return tx.to_wallet_id === walletId ? "in" : "out";
+}
+
 export function WalletView() {
-  const formatMoney = (amount: number) =>
-    new Intl.NumberFormat("fr-GN").format(Math.abs(amount));
+  const { userId, wallet, transactions, profile, loading } = useWallet();
+
+  if (loading) {
+    return (
+      <div className="max-w-md mx-auto py-20 flex justify-center">
+        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  if (!userId) {
+    return (
+      <div className="max-w-md mx-auto px-4 py-16 text-center">
+        <div className="w-16 h-16 rounded-2xl gradient-primary mx-auto flex items-center justify-center mb-4">
+          <LogIn className="w-7 h-7 text-primary-foreground" />
+        </div>
+        <h2 className="text-xl font-bold text-foreground mb-2">Portefeuille CHOP CHOP</h2>
+        <p className="text-sm text-muted-foreground mb-6">
+          Connectez-vous pour activer votre portefeuille et commencer à payer en GNF.
+        </p>
+        <Link to="/auth">
+          <Button className="w-full h-12 gradient-primary">Se connecter</Button>
+        </Link>
+      </div>
+    );
+  }
+
+  const available = wallet ? wallet.balance_gnf - wallet.held_gnf : 0;
+  const needsPin = !profile?.pin_hash;
 
   return (
     <div className="max-w-md mx-auto">
@@ -64,9 +93,24 @@ export function WalletView() {
         animate={{ opacity: 1, y: 0 }}
         className="px-4 pt-6 pb-4"
       >
-        <h1 className="text-2xl font-bold text-foreground mb-4">Portefeuille</h1>
-        <WalletCard balance={2500000} />
+        <h1 className="text-2xl font-bold text-foreground mb-1">Portefeuille</h1>
+        {profile?.phone && (
+          <p className="text-xs text-muted-foreground mb-4">{profile.phone}</p>
+        )}
+        <WalletCard balance={available} />
+        {wallet && wallet.held_gnf > 0 && (
+          <p className="text-xs text-muted-foreground mt-2 text-center">
+            {formatMoney(wallet.held_gnf)} GNF en attente
+          </p>
+        )}
       </motion.header>
+
+      {/* PIN setup */}
+      {needsPin && (
+        <div className="px-4 mb-6">
+          <PinSetup userId={userId} onDone={() => window.location.reload()} />
+        </div>
+      )}
 
       {/* Quick actions */}
       <div className="px-4 mb-6">
@@ -90,28 +134,22 @@ export function WalletView() {
         </div>
       </div>
 
-      {/* Payment methods */}
-      <div className="px-4 mb-6">
-        <h2 className="text-lg font-semibold text-foreground mb-3">Moyens de paiement</h2>
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-card rounded-2xl p-4 shadow-card"
-        >
-          <div className="flex items-center gap-3">
+      {/* Status / security */}
+      {!needsPin && (
+        <div className="px-4 mb-6">
+          <div className="bg-card rounded-2xl p-4 shadow-card flex items-center gap-3">
             <div className="p-2 rounded-xl bg-primary/10">
-              <CreditCard className="w-5 h-5 text-primary" />
+              <ShieldCheck className="w-5 h-5 text-primary" />
             </div>
             <div className="flex-1">
-              <p className="font-medium text-foreground">Orange Money</p>
-              <p className="text-sm text-muted-foreground">+224 6** *** **89</p>
+              <p className="font-medium text-foreground text-sm">Code PIN actif</p>
+              <p className="text-xs text-muted-foreground">
+                Votre portefeuille est sécurisé
+              </p>
             </div>
-            <span className="text-xs font-medium text-primary bg-primary/10 px-2 py-1 rounded-full">
-              Principal
-            </span>
           </div>
-        </motion.div>
-      </div>
+        </div>
+      )}
 
       {/* Transaction history */}
       <div className="px-4 pb-6">
@@ -123,47 +161,65 @@ export function WalletView() {
           </button>
         </div>
 
-        <div className="space-y-3">
-          {transactions.map((tx, index) => (
-            <motion.div
-              key={tx.id}
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: index * 0.05 }}
-              className="bg-card rounded-2xl p-4 shadow-card flex items-center gap-3"
-            >
-              <div
-                className={`p-2 rounded-xl ${
-                  tx.type === "in" ? "bg-success/10" : "bg-destructive/10"
-                }`}
-              >
-                {tx.type === "in" ? (
-                  <ArrowDownLeft
-                    className={`w-5 h-5 ${
-                      tx.type === "in" ? "text-success" : "text-destructive"
-                    }`}
-                  />
-                ) : (
-                  <ArrowUpRight className="w-5 h-5 text-destructive" />
-                )}
-              </div>
-              <div className="flex-1">
-                <p className="font-medium text-foreground text-sm">{tx.title}</p>
-                <p className="text-xs text-muted-foreground">{tx.description}</p>
-              </div>
-              <div className="text-right">
-                <p
-                  className={`font-semibold text-sm ${
-                    tx.type === "in" ? "text-success" : "text-foreground"
-                  }`}
+        {transactions.length === 0 ? (
+          <div className="bg-card rounded-2xl p-8 text-center shadow-card">
+            <CreditCard className="w-8 h-8 mx-auto text-muted-foreground mb-2" />
+            <p className="text-sm text-muted-foreground">
+              Aucune transaction pour le moment
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">
+              Rechargez votre portefeuille chez un agent CHOP CHOP
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {transactions.map((tx, index) => {
+              const dir = wallet ? txDirection(tx, wallet.id) : "out";
+              return (
+                <motion.div
+                  key={tx.id}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: index * 0.03 }}
+                  className="bg-card rounded-2xl p-4 shadow-card flex items-center gap-3"
                 >
-                  {tx.type === "in" ? "+" : "-"}{formatMoney(tx.amount)} GNF
-                </p>
-                <p className="text-xs text-muted-foreground">{tx.date}</p>
-              </div>
-            </motion.div>
-          ))}
-        </div>
+                  <div
+                    className={`p-2 rounded-xl ${
+                      dir === "in" ? "bg-success/10" : "bg-destructive/10"
+                    }`}
+                  >
+                    {dir === "in" ? (
+                      <ArrowDownLeft className="w-5 h-5 text-success" />
+                    ) : (
+                      <ArrowUpRight className="w-5 h-5 text-destructive" />
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-foreground text-sm">
+                      {TX_LABEL[tx.type] ?? tx.type}
+                    </p>
+                    <p className="text-xs text-muted-foreground truncate">
+                      {tx.description ?? tx.reference}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p
+                      className={`font-semibold text-sm ${
+                        dir === "in" ? "text-success" : "text-foreground"
+                      }`}
+                    >
+                      {dir === "in" ? "+" : "-"}
+                      {formatMoney(tx.amount_gnf)} GNF
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {formatDate(tx.created_at)}
+                    </p>
+                  </div>
+                </motion.div>
+              );
+            })}
+          </div>
+        )}
       </div>
     </div>
   );
