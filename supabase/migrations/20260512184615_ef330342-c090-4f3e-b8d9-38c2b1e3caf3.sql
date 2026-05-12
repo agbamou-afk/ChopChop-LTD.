@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.handle_new_agent() FROM PUBLIC, anon, authenticated;
