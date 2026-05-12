@@ -4,6 +4,7 @@ import { SplashScreen } from "@/components/SplashScreen";
 import { UserHome } from "@/components/views/UserHome";
 import { DriverHome } from "@/components/views/DriverHome";
 import { RideBooking } from "@/components/ride/RideBooking";
+import { LiveTracking, type TrackingMode } from "@/components/tracking/LiveTracking";
 import { FoodView } from "@/components/views/FoodView";
 import { MarketView } from "@/components/views/MarketView";
 import { WalletView } from "@/components/views/WalletView";
@@ -22,6 +23,12 @@ const Index = () => {
   const [activeTab, setActiveTab] = useState("home");
   const [activeView, setActiveView] = useState<ActiveView>("home");
   const [bookingRide, setBookingRide] = useState<RideType>(null);
+  const [activeTrip, setActiveTrip] = useState<{
+    mode: TrackingMode;
+    pickupCoords: [number, number];
+    destCoords?: [number, number];
+    fare: number;
+  } | null>(null);
 
   useEffect(() => {
     const t = setTimeout(() => setShowSplash(false), 4400);
@@ -121,8 +128,20 @@ const Index = () => {
           <RideBooking
             type={bookingRide}
             onClose={() => setBookingRide(null)}
-            onBook={() => {
+            onBook={(trip) => {
+              setActiveTrip({ mode: bookingRide, ...trip });
               setBookingRide(null);
+            }}
+          />
+        )}
+        {activeTrip && (
+          <LiveTracking
+            mode={activeTrip.mode}
+            pickupCoords={activeTrip.pickupCoords}
+            destCoords={activeTrip.destCoords}
+            fare={activeTrip.fare}
+            onClose={() => {
+              setActiveTrip(null);
               setActiveView("orders");
               setActiveTab("orders");
             }}
@@ -130,7 +149,7 @@ const Index = () => {
         )}
       </AnimatePresence>
 
-      {!bookingRide && (
+      {!bookingRide && !activeTrip && (
         <>
           {isDriverMode ? renderDriverView() : renderUserView()}
           <BottomNav
