@@ -1,5 +1,5 @@
 import { QuickActions } from "@/components/home/QuickActions";
-import { MapPin } from "lucide-react";
+import { MapPin, Search, Home as HomeIcon, Briefcase, Clock } from "lucide-react";
 import { PromoCarousel } from "@/components/home/PromoCarousel";
 import { RestaurantCard } from "@/components/food/RestaurantCard";
 import { AppHeader } from "@/components/ui/AppHeader";
@@ -31,6 +31,12 @@ const popularRestaurants = [
 export function UserHome({ onActionClick, onToggleDriverMode }: UserHomeProps) {
   const walletBalance = 2500000;
   const userLocation = "Kaloum";
+  const recents = [
+    { icon: HomeIcon, label: "Maison", sub: "Ratoma" },
+    { icon: Briefcase, label: "Travail", sub: "Kaloum" },
+    { icon: Clock, label: "Madina", sub: "Récent" },
+    { icon: Clock, label: "Aéroport", sub: "Récent" },
+  ];
   return (
     <div className="max-w-md mx-auto">
       <AppHeader
@@ -44,11 +50,44 @@ export function UserHome({ onActionClick, onToggleDriverMode }: UserHomeProps) {
 
       {/* Content */}
       <div className="px-4 mt-6 space-y-6">
+        {/* Universal search */}
+        <button
+          onClick={() => onActionClick("moto")}
+          className="w-full flex items-center gap-3 px-4 py-3.5 bg-card rounded-2xl shadow-card text-left hover:bg-muted/50 transition-colors"
+        >
+          <Search className="w-5 h-5 text-muted-foreground shrink-0" />
+          <span className="text-sm text-muted-foreground">
+            Où allez-vous ? Que voulez-vous faire ?
+          </span>
+        </button>
+
         {/* Quick Actions */}
         <section>
           <h2 className="text-lg font-semibold text-foreground mb-4">Services</h2>
           <div className="bg-card rounded-3xl shadow-card p-4">
             <QuickActions onActionClick={onActionClick} />
+          </div>
+        </section>
+
+        {/* Recent destinations */}
+        <section>
+          <h2 className="text-lg font-semibold text-foreground mb-3">Récents</h2>
+          <div className="flex gap-2 overflow-x-auto pb-1 -mx-4 px-4 scrollbar-none">
+            {recents.map((r) => (
+              <button
+                key={r.label}
+                onClick={() => onActionClick("moto")}
+                className="shrink-0 flex items-center gap-2 px-3 py-2.5 bg-card rounded-2xl shadow-card hover:bg-muted/50 transition-colors"
+              >
+                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                  <r.icon className="w-4 h-4 text-primary" />
+                </div>
+                <div className="text-left">
+                  <p className="text-sm font-medium text-foreground leading-tight">{r.label}</p>
+                  <p className="text-[10px] text-muted-foreground leading-tight">{r.sub}</p>
+                </div>
+              </button>
+            ))}
           </div>
         </section>
 
