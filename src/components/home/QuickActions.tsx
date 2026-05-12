@@ -11,12 +11,12 @@ interface QuickActionsProps {
 }
 
 const actions = [
-  { id: "moto", img: motoIcon, label: "Moto", tint: "bg-primary/10" },
+  { id: "moto", img: motoIcon, label: "Moto", tint: "bg-primary/8" },
   { id: "toktok", img: toktokIcon, label: "TokTok", tint: "bg-secondary/15" },
-  { id: "food", img: repasIcon, label: "Repas", tint: "bg-destructive/10" },
-  { id: "market", img: marcheIcon, label: "Marché", tint: "bg-primary/10" },
+  { id: "food", img: repasIcon, label: "Repas", tint: "bg-destructive/8" },
+  { id: "market", img: marcheIcon, label: "Marché", tint: "bg-primary/8" },
   { id: "send", img: envoyerIcon, label: "Envoyer", tint: "bg-secondary/15" },
-  { id: "scan", img: scannerIcon, label: "Scanner", tint: "bg-primary/10" },
+  { id: "scan", img: scannerIcon, label: "Scanner", tint: "bg-muted" },
 ];
 
 const container = {
@@ -40,7 +40,7 @@ export function QuickActions({ onActionClick }: QuickActionsProps) {
       variants={container}
       initial="hidden"
       animate="show"
-      className="grid grid-cols-3 gap-x-4 gap-y-1"
+      className="grid grid-cols-3 gap-x-4 gap-y-3"
     >
       {actions.map((action) => (
         <motion.button
@@ -51,17 +51,17 @@ export function QuickActions({ onActionClick }: QuickActionsProps) {
           onClick={() => onActionClick(action.id)}
           className="flex flex-col items-center transition-transform"
         >
-          <div className={`w-20 h-20 rounded-full ${action.tint} flex items-center justify-center mb-2`}>
+          <div className={`w-20 h-20 rounded-2xl ${action.tint} flex items-center justify-center mb-2 shadow-card overflow-hidden`}>
             <img
               src={action.img}
               alt={action.label}
               loading="lazy"
               width={1024}
               height={1024}
-              className="w-28 h-28 object-contain"
+              className="w-20 h-20 object-contain scale-150"
             />
           </div>
-          <span className="text-xs font-medium text-foreground">{action.label}</span>
+          <span className="text-xs font-semibold text-foreground">{action.label}</span>
         </motion.button>
       ))}
     </motion.div>
