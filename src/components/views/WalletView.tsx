@@ -17,6 +17,7 @@ import { useWallet, type WalletTransaction } from "@/hooks/useWallet";
 import { PinSetup } from "@/components/wallet/PinSetup";
 import { MyQrModal } from "@/components/wallet/MyQrModal";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 type ActionId = "send" | "receive" | "scan" | "add";
 
