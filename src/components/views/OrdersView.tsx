@@ -28,7 +28,7 @@ const orders = [
     type: "delivery" as const,
     status: "completed",
     title: "Livraison terminée",
-    from: "Marché Chop Chop",
+    from: "Marché CHOP CHOP",
     to: "Ratoma Centre",
     time: "Hier, 16:30",
     price: 180000,
