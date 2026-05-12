@@ -5,6 +5,8 @@ import { UserHome } from "@/components/views/UserHome";
 import { DriverHome } from "@/components/views/DriverHome";
 import { RideBooking } from "@/components/ride/RideBooking";
 import { LiveTracking, type TrackingMode } from "@/components/tracking/LiveTracking";
+import { QrScanner } from "@/components/scanner/QrScanner";
+import { toast } from "@/hooks/use-toast";
 import { FoodView } from "@/components/views/FoodView";
 import { MarketView } from "@/components/views/MarketView";
 import { WalletView } from "@/components/views/WalletView";
@@ -29,6 +31,7 @@ const Index = () => {
     destCoords?: [number, number];
     fare: number;
   } | null>(null);
+  const [showScanner, setShowScanner] = useState(false);
 
   useEffect(() => {
     const t = setTimeout(() => setShowSplash(false), 4400);
@@ -50,9 +53,11 @@ const Index = () => {
         setActiveView("market");
         break;
       case "send":
-      case "scan":
         setActiveView("wallet");
         setActiveTab("wallet");
+        break;
+      case "scan":
+        setShowScanner(true);
         break;
       default:
         break;
@@ -159,6 +164,18 @@ const Index = () => {
             onScanClick={() => handleAction("scan")}
           />
         </>
+      )}
+
+      {showScanner && (
+        <QrScanner
+          title="Scanner un QR CHOP CHOP"
+          subtitle="Course, paiement ou code marchand"
+          onClose={() => setShowScanner(false)}
+          onResult={(text) => {
+            setShowScanner(false);
+            toast({ title: "Code scanné", description: text });
+          }}
+        />
       )}
     </div>
   );
