@@ -10,13 +10,14 @@ interface QuickActionsProps {
   onActionClick: (action: string) => void;
 }
 
+const TILE_BG = "bg-[hsl(0_0%_94%)]";
 const actions = [
-  { id: "moto", img: motoIcon, label: "Moto", tint: "bg-[hsl(var(--accent-moto)/0.10)]" },
-  { id: "toktok", img: toktokIcon, label: "TokTok", tint: "bg-[hsl(var(--accent-toktok)/0.18)]" },
-  { id: "food", img: repasIcon, label: "Repas", tint: "bg-transparent" },
-  { id: "market", img: marcheIcon, label: "Marché", tint: "bg-[hsl(var(--accent-marche)/0.10)]" },
-  { id: "send", img: envoyerIcon, label: "Envoyer", tint: "bg-[hsl(var(--accent-envoyer)/0.15)]" },
-  { id: "scan", img: scannerIcon, label: "Scanner", tint: "bg-muted" },
+  { id: "moto", img: motoIcon, label: "Moto", tint: TILE_BG },
+  { id: "toktok", img: toktokIcon, label: "TokTok", tint: TILE_BG },
+  { id: "food", img: repasIcon, label: "Repas", tint: TILE_BG },
+  { id: "market", img: marcheIcon, label: "Marché", tint: TILE_BG },
+  { id: "send", img: envoyerIcon, label: "Envoyer", tint: TILE_BG },
+  { id: "scan", img: scannerIcon, label: "Scanner", tint: TILE_BG },
 ];
 
 const container = {
