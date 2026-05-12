@@ -11,11 +11,11 @@ interface QuickActionsProps {
 }
 
 const actions = [
-  { id: "moto", img: motoIcon, label: "Moto", tint: "bg-primary/8" },
-  { id: "toktok", img: toktokIcon, label: "TokTok", tint: "bg-secondary/15" },
-  { id: "food", img: repasIcon, label: "Repas", tint: "bg-destructive/8" },
-  { id: "market", img: marcheIcon, label: "Marché", tint: "bg-primary/8" },
-  { id: "send", img: envoyerIcon, label: "Envoyer", tint: "bg-secondary/15" },
+  { id: "moto", img: motoIcon, label: "Moto", tint: "bg-[hsl(var(--accent-moto)/0.10)]" },
+  { id: "toktok", img: toktokIcon, label: "TokTok", tint: "bg-[hsl(var(--accent-toktok)/0.18)]" },
+  { id: "food", img: repasIcon, label: "Repas", tint: "bg-[hsl(var(--accent-repas)/0.12)]" },
+  { id: "market", img: marcheIcon, label: "Marché", tint: "bg-[hsl(var(--accent-marche)/0.10)]" },
+  { id: "send", img: envoyerIcon, label: "Envoyer", tint: "bg-[hsl(var(--accent-envoyer)/0.15)]" },
   { id: "scan", img: scannerIcon, label: "Scanner", tint: "bg-muted" },
 ];
 
