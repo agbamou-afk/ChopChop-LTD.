@@ -115,6 +115,15 @@ export function ProfileView({ isDriverMode, onToggleDriverMode }: ProfileViewPro
           Se déconnecter
         </motion.button>
 
+        {/* Admin link */}
+        <Link
+          to="/admin"
+          className="w-full flex items-center justify-center gap-2 mt-3 p-3 text-xs text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <ShieldCheck className="w-4 h-4" />
+          Espace administrateur
+        </Link>
+
         {/* Version */}
         <p className="text-center text-sm text-muted-foreground mt-6">
           Version 1.0.0
