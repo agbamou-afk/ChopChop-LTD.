@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { formatGNF } from "@/lib/format";
+import { ensureOnlineForFinancialAction } from "@/contexts/AppEnvContext";
 
 type TopupRow = {
   id: string;
@@ -66,6 +67,10 @@ export function TopUpOrangeMoney({ onClose }: { onClose: () => void }) {
   const create = async () => {
     if (amount < 1000) {
       toast.error("Montant minimum: 1 000 GNF");
+      return;
+    }
+    if (!ensureOnlineForFinancialAction()) {
+      toast.error("Connexion indisponible. Réessayez quand vous serez en ligne.");
       return;
     }
     setCreating(true);
