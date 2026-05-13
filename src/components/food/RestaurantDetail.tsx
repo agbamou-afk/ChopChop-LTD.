@@ -1,0 +1,274 @@
+import { motion, AnimatePresence } from "framer-motion";
+import { ArrowLeft, Plus, Minus, ShoppingBag, Clock, Star, MapPin, X, CheckCircle2 } from "lucide-react";
+import { useMemo, useState } from "react";
+import { formatGNF } from "@/lib/format";
+import { PrimaryButton } from "@/components/ui/PrimaryButton";
+import { toast } from "sonner";
+
+export interface MenuItem {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  image?: string;
+}
+
+export interface Restaurant {
+  name: string;
+  image: string;
+  rating: number;
+  deliveryTime: string;
+  distance: string;
+  category: string;
+  menu: MenuItem[];
+}
+
+interface Props {
+  restaurant: Restaurant;
+  onClose: () => void;
+}
+
+type Stage = "menu" | "cart" | "checkout" | "confirmed";
+
+const DELIVERY_FEE = 8000;
+
+export function RestaurantDetail({ restaurant, onClose }: Props) {
+  const [cart, setCart] = useState<Record<string, number>>({});
+  const [stage, setStage] = useState<Stage>("menu");
+  const [address, setAddress] = useState("Kipé, Conakry");
+
+  const items = useMemo(
+    () =>
+      Object.entries(cart)
+        .map(([id, qty]) => {
+          const item = restaurant.menu.find((m) => m.id === id);
+          return item ? { ...item, qty } : null;
+        })
+        .filter((x): x is MenuItem & { qty: number } => x !== null),
+    [cart, restaurant.menu],
+  );
+
+  const subtotal = items.reduce((s, i) => s + i.price * i.qty, 0);
+  const total = subtotal > 0 ? subtotal + DELIVERY_FEE : 0;
+  const itemCount = items.reduce((s, i) => s + i.qty, 0);
+
+  const inc = (id: string) => setCart((c) => ({ ...c, [id]: (c[id] ?? 0) + 1 }));
+  const dec = (id: string) =>
+    setCart((c) => {
+      const next = { ...c };
+      const v = (next[id] ?? 0) - 1;
+      if (v <= 0) delete next[id];
+      else next[id] = v;
+      return next;
+    });
+
+  const placeOrder = () => {
+    setStage("confirmed");
+    toast.success("Commande confirmée !");
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 24 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: 24 }}
+      className="fixed inset-0 z-50 bg-background overflow-y-auto"
+    >
+      <div className="max-w-md mx-auto pb-32">
+        {/* Hero */}
+        <div className="relative h-48">
+          <img src={restaurant.image} alt={restaurant.name} className="w-full h-full object-cover" />
+          <button
+            onClick={onClose}
+            className="absolute top-4 left-4 w-10 h-10 rounded-full bg-card/90 backdrop-blur flex items-center justify-center"
+            aria-label="Retour"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Info */}
+        <div className="px-4 -mt-6 relative">
+          <div className="bg-card rounded-2xl p-4 shadow-elevated">
+            <h1 className="text-xl font-bold text-foreground">{restaurant.name}</h1>
+            <p className="text-xs text-muted-foreground">{restaurant.category}</p>
+            <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
+              <span className="flex items-center gap-1">
+                <Star className="w-3.5 h-3.5 fill-secondary text-secondary" /> {restaurant.rating}
+              </span>
+              <span className="flex items-center gap-1">
+                <Clock className="w-3.5 h-3.5" /> {restaurant.deliveryTime}
+              </span>
+              <span className="flex items-center gap-1">
+                <MapPin className="w-3.5 h-3.5" /> {restaurant.distance}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Menu */}
+        <section className="px-4 mt-6">
+          <h2 className="text-base font-semibold text-foreground mb-3">Menu</h2>
+          <div className="space-y-3">
+            {restaurant.menu.map((m) => {
+              const qty = cart[m.id] ?? 0;
+              return (
+                <div key={m.id} className="bg-card rounded-2xl p-3 shadow-card flex gap-3">
+                  {m.image && (
+                    <img src={m.image} alt={m.name} className="w-20 h-20 rounded-xl object-cover" />
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-foreground text-sm">{m.name}</p>
+                    <p className="text-xs text-muted-foreground line-clamp-2">{m.description}</p>
+                    <p className="text-sm font-bold text-primary mt-1">{formatGNF(m.price)}</p>
+                  </div>
+                  {qty === 0 ? (
+                    <button
+                      onClick={() => inc(m.id)}
+                      className="self-end w-9 h-9 rounded-full gradient-primary text-primary-foreground flex items-center justify-center shadow-soft"
+                      aria-label={`Ajouter ${m.name}`}
+                    >
+                      <Plus className="w-4 h-4" />
+                    </button>
+                  ) : (
+                    <div className="self-end flex items-center gap-2 bg-muted rounded-full p-1">
+                      <button
+                        onClick={() => dec(m.id)}
+                        className="w-7 h-7 rounded-full bg-card flex items-center justify-center"
+                        aria-label="Retirer"
+                      >
+                        <Minus className="w-3.5 h-3.5" />
+                      </button>
+                      <span className="text-sm font-semibold w-5 text-center">{qty}</span>
+                      <button
+                        onClick={() => inc(m.id)}
+                        className="w-7 h-7 rounded-full gradient-primary text-primary-foreground flex items-center justify-center"
+                        aria-label="Ajouter"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      </div>
+
+      {/* Cart bar */}
+      {itemCount > 0 && stage === "menu" && (
+        <motion.button
+          initial={{ y: 80 }}
+          animate={{ y: 0 }}
+          onClick={() => setStage("cart")}
+          className="fixed bottom-4 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-md bg-foreground text-background rounded-2xl p-4 shadow-elevated flex items-center justify-between"
+        >
+          <span className="flex items-center gap-2">
+            <ShoppingBag className="w-5 h-5" />
+            <span className="font-semibold">{itemCount} article{itemCount > 1 ? "s" : ""}</span>
+          </span>
+          <span className="font-bold">{formatGNF(subtotal)}</span>
+        </motion.button>
+      )}
+
+      {/* Cart sheet */}
+      <AnimatePresence>
+        {stage !== "menu" && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[60] bg-foreground/40 flex items-end justify-center"
+            onClick={() => stage !== "confirmed" && setStage("menu")}
+          >
+            <motion.div
+              initial={{ y: 400 }}
+              animate={{ y: 0 }}
+              exit={{ y: 400 }}
+              transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-md bg-card rounded-t-3xl p-5 max-h-[85vh] overflow-y-auto"
+            >
+              {stage === "confirmed" ? (
+                <div className="text-center py-6">
+                  <div className="w-16 h-16 mx-auto rounded-full bg-brand-green-muted flex items-center justify-center mb-4">
+                    <CheckCircle2 className="w-9 h-9 text-primary" />
+                  </div>
+                  <h3 className="text-xl font-bold text-foreground mb-2">Commande confirmée</h3>
+                  <p className="text-sm text-muted-foreground mb-1">
+                    {restaurant.name} prépare votre commande.
+                  </p>
+                  <p className="text-xs text-muted-foreground mb-6">
+                    Livraison estimée : {restaurant.deliveryTime}
+                  </p>
+                  <PrimaryButton fullWidth onClick={onClose}>Terminer</PrimaryButton>
+                </div>
+              ) : (
+                <>
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-bold text-foreground">
+                      {stage === "cart" ? "Votre panier" : "Confirmer la commande"}
+                    </h3>
+                    <button onClick={() => setStage("menu")} aria-label="Fermer">
+                      <X className="w-5 h-5" />
+                    </button>
+                  </div>
+
+                  <div className="space-y-2 mb-4">
+                    {items.map((i) => (
+                      <div key={i.id} className="flex items-center gap-3 text-sm">
+                        <span className="w-6 text-muted-foreground">{i.qty}×</span>
+                        <span className="flex-1 text-foreground">{i.name}</span>
+                        <span className="font-medium text-foreground">{formatGNF(i.price * i.qty)}</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  {stage === "checkout" && (
+                    <div className="mb-4">
+                      <label className="text-xs font-medium text-muted-foreground block mb-1">
+                        Adresse de livraison
+                      </label>
+                      <input
+                        value={address}
+                        onChange={(e) => setAddress(e.target.value)}
+                        className="w-full bg-muted rounded-xl px-4 py-3 text-sm focus:outline-none"
+                        placeholder="Quartier, repère utile…"
+                      />
+                    </div>
+                  )}
+
+                  <div className="border-t border-border pt-3 space-y-1.5 text-sm mb-5">
+                    <div className="flex justify-between text-muted-foreground">
+                      <span>Sous-total</span>
+                      <span>{formatGNF(subtotal)}</span>
+                    </div>
+                    <div className="flex justify-between text-muted-foreground">
+                      <span>Livraison</span>
+                      <span>{formatGNF(DELIVERY_FEE)}</span>
+                    </div>
+                    <div className="flex justify-between font-bold text-base text-foreground pt-1">
+                      <span>Total</span>
+                      <span>{formatGNF(total)}</span>
+                    </div>
+                  </div>
+
+                  {stage === "cart" ? (
+                    <PrimaryButton fullWidth onClick={() => setStage("checkout")}>
+                      Continuer
+                    </PrimaryButton>
+                  ) : (
+                    <PrimaryButton fullWidth onClick={placeOrder}>
+                      Payer {formatGNF(total)}
+                    </PrimaryButton>
+                  )}
+                </>
+              )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
+  );
+}
