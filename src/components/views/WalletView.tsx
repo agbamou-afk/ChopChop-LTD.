@@ -23,6 +23,14 @@ import { toast } from "sonner";
 import { ScreenHeader } from "@/components/ui/ScreenHeader";
 import { LiveStrip } from "@/components/ui/LiveStrip";
 import { Timer, Users } from "lucide-react";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+} from "@/components/ui/sheet";
+import { TopUpOrangeMoney } from "@/components/wallet/TopUpOrangeMoney";
 
 type ActionId = "send" | "receive" | "scan" | "add";
 
@@ -72,6 +80,7 @@ function txDirection(tx: WalletTransaction, walletId: string): "in" | "out" {
 export function WalletView() {
   const { userId, wallet, transactions, profile, loading } = useWallet();
   const [qrOpen, setQrOpen] = useState(false);
+  const [topUpOpen, setTopUpOpen] = useState(false);
 
   if (loading) {
     return (
@@ -103,7 +112,8 @@ export function WalletView() {
   const lowBalance = wallet !== null && available < 50000;
 
   const onAction = (id: ActionId) => {
-    if (id === "scan" || id === "add" || id === "receive") setQrOpen(true);
+    if (id === "add") setTopUpOpen(true);
+    else if (id === "scan" || id === "receive") setQrOpen(true);
     else toast("Bientôt disponible");
   };
 
@@ -281,6 +291,20 @@ export function WalletView() {
         userId={userId}
         phone={profile?.phone ?? null}
       />
+
+      <Sheet open={topUpOpen} onOpenChange={setTopUpOpen}>
+        <SheetContent side="bottom" className="rounded-t-3xl max-h-[92vh] overflow-y-auto">
+          <SheetHeader className="text-left">
+            <SheetTitle>Recharger via Orange Money</SheetTitle>
+            <SheetDescription>
+              Payez le compte marchand CHOP CHOP — votre portefeuille est crédité automatiquement.
+            </SheetDescription>
+          </SheetHeader>
+          <div className="mt-4">
+            <TopUpOrangeMoney onClose={() => setTopUpOpen(false)} />
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
