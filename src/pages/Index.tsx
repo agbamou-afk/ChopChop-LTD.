@@ -5,6 +5,7 @@ import { UserHome } from "@/components/views/UserHome";
 import { DriverHome } from "@/components/views/DriverHome";
 import { RideBooking } from "@/components/ride/RideBooking";
 import { LiveTracking, type TrackingMode } from "@/components/tracking/LiveTracking";
+import { RealtimeTripScreen } from "@/components/trip/RealtimeTripScreen";
 import { QrScanner } from "@/components/scanner/QrScanner";
 import { toast } from "@/hooks/use-toast";
 import { FoodView } from "@/components/views/FoodView";
@@ -227,7 +228,23 @@ const Index = () => {
           />
         )}
         {activeTrip && (
-          <LiveTracking
+          (typeof window !== "undefined" &&
+            (localStorage.getItem("cc_realtime_trip") === "1" ||
+              /[?&]trip=v2/.test(window.location.search))) && activeTrip.rideId
+          ? (
+            <RealtimeTripScreen
+              key={`v2-${activeTrip.rideId}`}
+              rideId={activeTrip.rideId}
+              mode={activeTrip.mode as "moto" | "toktok"}
+              holdId={activeTrip.holdId}
+              onClose={() => {
+                setActiveTrip(null);
+                setActiveView("orders");
+                setActiveTab("orders");
+              }}
+            />
+          )
+          : <LiveTracking
             mode={activeTrip.mode}
             pickupCoords={activeTrip.pickupCoords}
             destCoords={activeTrip.destCoords}
