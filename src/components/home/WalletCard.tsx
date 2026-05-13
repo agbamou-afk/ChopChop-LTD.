@@ -10,12 +10,8 @@ interface WalletCardProps {
   onReceive?: () => void;
 }
 
-export function WalletCard({ balance, currency = "GNF", onSend, onReceive }: WalletCardProps) {
+export function WalletCard({ balance, onSend, onReceive }: WalletCardProps) {
   const [showBalance, setShowBalance] = useState(true);
-
-  const formatBalance = (amount: number) => {
-    return formatGNF(amount);
-  };
 
   return (
     <motion.div
@@ -28,7 +24,7 @@ export function WalletCard({ balance, currency = "GNF", onSend, onReceive }: Wal
           <p className="text-sm opacity-80">Solde disponible</p>
           <div className="flex items-center gap-2 mt-1">
             <h2 className="text-2xl font-bold">
-              {showBalance ? `${formatBalance(balance)} ${currency}` : "••••••••"}
+              {showBalance ? formatGNF(balance) : "••••••••"}
             </h2>
             <button
               onClick={() => setShowBalance(!showBalance)}
