@@ -90,7 +90,7 @@ async function flush() {
   const batch = buffer.splice(0, buffer.length);
   // Insert in background — never await user-blocking calls; never throw.
   try {
-    await supabase.from("analytics_events").insert(batch);
+    await supabase.from("analytics_events").insert(batch as unknown as never);
   } catch {
     /* swallow — analytics must never break the app */
   }
