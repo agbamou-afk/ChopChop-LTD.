@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import { MapPin, Loader2, AlertTriangle, Settings, RefreshCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useGeolocation, type GeoStatus } from "@/hooks/useGeolocation";
@@ -39,10 +40,14 @@ export function LocationPermissionPrompt({ onLocated, onManualEntry, compact }: 
   const { status, position, error, request, isReady, isLowAccuracy, supported } =
     useGeolocation();
 
-  // If we already have a position, surface it upward
-  if (position && isReady) {
+  const lastTsRef = useRef<number | null>(null);
+  useEffect(() => {
+    if (!position) return;
+    if (!(isReady || isLowAccuracy)) return;
+    if (lastTsRef.current === position.timestamp) return;
+    lastTsRef.current = position.timestamp;
     onLocated({ lat: position.lat, lng: position.lng, accuracy: position.accuracy });
-  }
+  }, [position, isReady, isLowAccuracy, onLocated]);
 
   const Icon =
     status === "loading"
