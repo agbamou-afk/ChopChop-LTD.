@@ -11,12 +11,12 @@ const channels = [
   { key: "sms_enabled", label: "SMS", help: "Canal de secours si WhatsApp échoue." },
 ] as const;
 
-const topics = [
+const topics: { key: "topic_otp" | "topic_wallet" | "topic_ride" | "topic_marketing"; label: string; help?: string }[] = [
   { key: "topic_otp", label: "Codes de vérification (OTP)", help: "Toujours recommandé." },
   { key: "topic_wallet", label: "Portefeuille (recharges, paiements)" },
   { key: "topic_ride", label: "Courses & livraisons" },
   { key: "topic_marketing", label: "Promotions & nouveautés" },
-] as const;
+];
 
 const NotificationSettings = () => {
   const navigate = useNavigate();
