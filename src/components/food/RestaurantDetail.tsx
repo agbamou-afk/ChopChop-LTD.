@@ -77,7 +77,7 @@ export function RestaurantDetail({ restaurant, onClose }: Props) {
       <div className="max-w-md mx-auto pb-32">
         {/* Hero */}
         <div className="relative h-48">
-          <img src={restaurant.image} alt={restaurant.name} className="w-full h-full object-cover" />
+          <img loading="lazy" decoding="async" src={restaurant.image} alt={restaurant.name} className="w-full h-full object-cover" />
           <button
             onClick={onClose}
             className="absolute top-4 left-4 w-10 h-10 rounded-full bg-card/90 backdrop-blur flex items-center justify-center"
@@ -115,7 +115,7 @@ export function RestaurantDetail({ restaurant, onClose }: Props) {
               return (
                 <div key={m.id} className="bg-card rounded-2xl p-3 shadow-card flex gap-3">
                   {m.image && (
-                    <img src={m.image} alt={m.name} className="w-20 h-20 rounded-xl object-cover" />
+                    <img loading="lazy" decoding="async" src={m.image} alt={m.name} className="w-20 h-20 rounded-xl object-cover" />
                   )}
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold text-foreground text-sm">{m.name}</p>

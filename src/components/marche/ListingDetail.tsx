@@ -155,7 +155,7 @@ export function ListingDetail({ listingId, onBack }: { listingId: string; onBack
       {/* Gallery */}
       <div className="relative bg-muted aspect-square">
         {images.length > 0 ? (
-          <img src={images[imgIdx]} alt={listing.title} className="w-full h-full object-cover" />
+          <img loading="lazy" decoding="async" src={images[imgIdx]} alt={listing.title} className="w-full h-full object-cover" />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-muted-foreground">Aucune photo</div>
         )}

@@ -85,7 +85,7 @@ export function ProfileView({ isDriverMode, onToggleDriverMode }: ProfileViewPro
               aria-label="Voir mon profil"
             >
               {profile?.avatar_url ? (
-                <img src={profile.avatar_url} alt={fullName} className="w-full h-full object-cover" />
+                <img loading="lazy" decoding="async" src={profile.avatar_url} alt={fullName} className="w-full h-full object-cover" />
               ) : (
                 initials
               )}

@@ -165,7 +165,7 @@ export function SellFlow({ onClose, onPosted }: { onClose: () => void; onPosted:
               <div className="grid grid-cols-3 gap-2">
                 {previews.map((src, i) => (
                   <div key={i} className="relative aspect-square rounded-xl overflow-hidden bg-muted">
-                    <img src={src} alt="" className="w-full h-full object-cover" />
+                    <img loading="lazy" decoding="async" src={src} alt="" className="w-full h-full object-cover" />
                     <button onClick={() => removePhoto(i)} className="absolute top-1 right-1 bg-background/90 rounded-full p-1">
                       <X className="w-3 h-3" />
                     </button>

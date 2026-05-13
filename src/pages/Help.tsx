@@ -125,7 +125,7 @@ export default function Help() {
           <button onClick={() => navigate(-1)} className="p-2 -ml-2 rounded-full hover:bg-white/10">
             <ArrowLeft className="w-5 h-5" />
           </button>
-          <img src={logo} alt="CHOP CHOP" className="h-10 w-auto" />
+          <img loading="lazy" decoding="async" src={logo} alt="CHOP CHOP" className="h-10 w-auto" />
           <h1 className="text-lg font-bold">Aide & FAQ</h1>
         </div>
       </header>
