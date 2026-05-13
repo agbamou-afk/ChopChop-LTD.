@@ -6,7 +6,6 @@ import { ScreenHeader } from "@/components/ui/ScreenHeader";
 import { LiveStrip } from "@/components/ui/LiveStrip";
 import { useDriverEarnings } from "@/hooks/useDriverEarnings";
 import { useWallet } from "@/hooks/useWallet";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 const MODE_ICON: Record<string, typeof Bike> = {
@@ -24,18 +23,18 @@ function formatTime(iso: string | null) {
 export function DriverEarningsView() {
   const e = useDriverEarnings();
   const { available: walletBalance } = useWallet("driver");
-  const [settling, setSettling] = useState(false);
+  const [_settling] = useState(false);
+  void _settling;
   const formatMoney = formatGNF;
   const maxAmount = Math.max(1, ...e.weeklyBuckets.map((d) => d.amount));
   const cashOverLimit = e.debtLimitGnf > 0 && e.cashDebtGnf >= e.debtLimitGnf;
 
-  const handleSettle = async () => {
-    if (settling || e.cashDebtGnf <= 0) return;
-    setSettling(true);
-    const { error } = await supabase.rpc("driver_cash_settle", { p_amount_gnf: e.cashDebtGnf });
-    setSettling(false);
-    if (error) toast.error(error.message || "Échec du règlement.");
-    else { toast.success("Commission réglée. Vous pouvez repasser en ligne."); e.refetch(); }
+  const handleSettleInfo = () => {
+    toast.info(
+      e.cashDebtGnf > 0
+        ? `Déposez ${formatMoney(e.cashDebtGnf)} chez un agent CHOP CHOP. Le règlement sera enregistré sous 24 h.`
+        : "Aucune commission cash à régler.",
+    );
   };
 
   return (
@@ -139,11 +138,11 @@ export function DriverEarningsView() {
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            onClick={handleSettle}
-            disabled={settling || e.cashDebtGnf <= 0}
+            onClick={handleSettleInfo}
+            disabled={e.cashDebtGnf <= 0}
             className="flex items-center justify-center gap-2 py-4 gradient-wallet text-primary-foreground rounded-2xl font-semibold ring-glow-primary disabled:opacity-50 text-sm"
           >
-            {settling ? <Loader2 className="w-5 h-5 animate-spin" /> : <Wallet className="w-5 h-5" />}
+            <Wallet className="w-5 h-5" />
             {e.cashDebtGnf > 0 ? "Régler" : "Aucune dette"}
           </motion.button>
           <motion.button
