@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { ProfileCompletionRedirect } from "@/components/auth/ProfileCompletionRedirect";
 import { useEffect, useState } from "react";
 import { AnimatePresence } from "framer-motion";
 import { SplashScreen } from "@/components/SplashScreen";
@@ -67,6 +68,7 @@ const App = () => {
       <AnimatePresence>{showSplash && <SplashScreen />}</AnimatePresence>
       <BrowserRouter>
       <AuthProvider>
+        <ProfileCompletionRedirect />
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/auth" element={<Auth />} />
