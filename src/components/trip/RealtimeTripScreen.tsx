@@ -1,9 +1,11 @@
 import { motion } from "framer-motion";
 import { X } from "lucide-react";
 import { ActiveTripMap } from "./ActiveTripMap";
+import { ClientTripReceipt } from "./ClientTripReceipt";
+import { useRideRealtime } from "@/hooks/useRideRealtime";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 interface Props {
   rideId: string;
@@ -26,6 +28,22 @@ const TITLES: Record<Props["mode"], string> = {
  */
 export function RealtimeTripScreen({ rideId, mode, holdId, onClose }: Props) {
   const settled = useRef(false);
+  const { ride } = useRideRealtime(rideId);
+  const [driverName, setDriverName] = useState<string | null>(null);
+  const [showReceipt, setShowReceipt] = useState(false);
+
+  useEffect(() => {
+    if (ride?.status === "completed") setShowReceipt(true);
+  }, [ride?.status]);
+
+  useEffect(() => {
+    if (!ride?.driver_id) return;
+    supabase.from("profiles").select("full_name, display_name")
+      .eq("user_id", ride.driver_id).maybeSingle()
+      .then(({ data }) => {
+        setDriverName(data?.display_name ?? data?.full_name ?? null);
+      });
+  }, [ride?.driver_id]);
 
   const releaseHold = async (reason: string) => {
     if (!holdId || settled.current) return;
@@ -59,6 +77,15 @@ export function RealtimeTripScreen({ rideId, mode, holdId, onClose }: Props) {
       exit={{ opacity: 0 }}
       className="fixed inset-0 z-50 bg-background flex flex-col"
     >
+      {showReceipt && ride && (
+        <ClientTripReceipt
+          rideId={rideId}
+          fareGnf={ride.fare_gnf ?? 0}
+          driverName={driverName}
+          paymentLabel="Espèces"
+          onClose={onClose}
+        />
+      )}
       <div className="gradient-primary px-4 py-3 flex items-center justify-between shrink-0">
         <button
           type="button"
