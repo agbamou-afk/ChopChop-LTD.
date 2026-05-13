@@ -1,4 +1,4 @@
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { Power, BellRing, Radar } from "lucide-react";
 import { useEffect, useState } from "react";
 import { DriverDashboard } from "@/components/driver/DriverDashboard";
