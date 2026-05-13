@@ -91,7 +91,7 @@ export default function ProfileInfo() {
           <div className="relative">
             <div className="w-24 h-24 rounded-full bg-muted flex items-center justify-center text-3xl font-bold text-primary overflow-hidden">
               {avatarUrl ? (
-                <img src={avatarUrl} alt="avatar" className="w-full h-full object-cover" />
+                <img src={avatarUrl} alt="Photo de profil de l'utilisateur" className="w-full h-full object-cover" />
               ) : (
                 (fullName || email)[0]?.toUpperCase() ?? "?"
               )}
