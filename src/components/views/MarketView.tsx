@@ -9,6 +9,7 @@ import { ListingDetail } from "@/components/marche/ListingDetail";
 import { SellFlow } from "@/components/marche/SellFlow";
 import { InboxView } from "@/components/marche/InboxView";
 import { categoryLabel } from "@/lib/marche";
+import { useAuthGuard } from "@/hooks/useAuthGuard";
 
 interface MarketViewProps {
   onBack: () => void;
@@ -27,6 +28,7 @@ export function MarketView({ onBack }: MarketViewProps) {
   const [search, setSearch] = useState("");
   const [listings, setListings] = useState<ListingCardData[]>([]);
   const [loading, setLoading] = useState(true);
+  const { requireAuth } = useAuthGuard();
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -98,7 +100,7 @@ export function MarketView({ onBack }: MarketViewProps) {
             </div>
           </div>
           <div className="flex items-center gap-1">
-            <button onClick={() => setScreen("inbox")} className="p-2 rounded-full hover:bg-muted relative">
+            <button onClick={() => requireAuth(() => setScreen("inbox"))} className="p-2 rounded-full hover:bg-muted relative">
               <MessageSquare className="w-5 h-5" />
             </button>
             <button className="p-2 rounded-full hover:bg-muted">
@@ -173,7 +175,7 @@ export function MarketView({ onBack }: MarketViewProps) {
       {/* FAB Sell */}
       <motion.button
         whileTap={{ scale: 0.9 }}
-        onClick={() => setScreen("sell")}
+        onClick={() => requireAuth(() => setScreen("sell"))}
         className="fixed bottom-24 right-4 z-40 gradient-primary text-primary-foreground rounded-full px-5 py-3.5 shadow-elevated flex items-center gap-2 font-semibold"
       >
         <Plus className="w-5 h-5" /> Vendre

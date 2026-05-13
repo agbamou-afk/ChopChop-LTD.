@@ -7,6 +7,7 @@ import { SellerBadge } from "./SellerBadge";
 import { ReportModal } from "./ReportModal";
 import { ChatThread } from "./ChatThread";
 import { toast } from "@/hooks/use-toast";
+import { useAuthGuard } from "@/hooks/useAuthGuard";
 
 interface FullListing {
   id: string;
@@ -35,6 +36,7 @@ export function ListingDetail({ listingId, onBack }: { listingId: string; onBack
   const [saved, setSaved] = useState(false);
   const [selfId, setSelfId] = useState<string | null>(null);
   const [openConv, setOpenConv] = useState<string | null>(null);
+  const { requireAuth } = useAuthGuard();
 
   useEffect(() => {
     let mounted = true;
@@ -81,10 +83,7 @@ export function ListingDetail({ listingId, onBack }: { listingId: string; onBack
   }, [listingId]);
 
   const toggleSave = async () => {
-    if (!selfId) {
-      toast({ title: "Connexion requise", description: "Connectez-vous pour sauvegarder." });
-      return;
-    }
+    if (!selfId) { requireAuth(); return; }
     if (saved) {
       await supabase.from("saved_listings").delete().eq("listing_id", listingId).eq("user_id", selfId);
       setSaved(false);
@@ -96,10 +95,7 @@ export function ListingDetail({ listingId, onBack }: { listingId: string; onBack
 
   const startChat = async () => {
     if (!listing) return;
-    if (!selfId) {
-      toast({ title: "Connexion requise", description: "Connectez-vous pour discuter." });
-      return;
-    }
+    if (!selfId) { requireAuth(); return; }
     if (selfId === listing.seller_id) {
       toast({ title: "Votre annonce", description: "Vous ne pouvez pas vous écrire à vous-même." });
       return;

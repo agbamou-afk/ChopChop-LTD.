@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -35,6 +35,9 @@ export default function Auth() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const nextParam = searchParams.get("next");
+  const safeNext = nextParam && nextParam.startsWith("/") ? nextParam : null;
 
   const routeByRole = async (uid: string) => {
     const { data: roles } = await supabase
@@ -54,7 +57,7 @@ export default function Auth() {
       navigate("/agent", { replace: true });
       return;
     }
-    navigate("/", { replace: true });
+    navigate(safeNext ?? "/", { replace: true });
   };
 
   useEffect(() => {
