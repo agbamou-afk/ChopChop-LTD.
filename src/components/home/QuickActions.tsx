@@ -12,12 +12,12 @@ interface QuickActionsProps {
 
 const TILE_BG = "bg-[hsl(0_0%_94%)]";
 const actions = [
-  { id: "moto", img: motoIcon, label: "Moto", tint: TILE_BG },
-  { id: "toktok", img: toktokIcon, label: "TokTok", tint: TILE_BG },
-  { id: "food", img: repasIcon, label: "Repas", tint: TILE_BG },
-  { id: "market", img: marcheIcon, label: "Marché", tint: TILE_BG },
-  { id: "send", img: envoyerIcon, label: "Envoyer", tint: TILE_BG },
-  { id: "scan", img: scannerIcon, label: "Scanner", tint: TILE_BG },
+  { id: "moto", img: motoIcon, label: "Moto", alt: "Réserver une moto-taxi", tint: TILE_BG },
+  { id: "toktok", img: toktokIcon, label: "TokTok", alt: "Réserver un TokTok tricycle", tint: TILE_BG },
+  { id: "food", img: repasIcon, label: "Repas", alt: "Commander un repas à domicile", tint: TILE_BG },
+  { id: "market", img: marcheIcon, label: "Marché", alt: "Acheter au marché en ligne", tint: TILE_BG },
+  { id: "send", img: envoyerIcon, label: "Envoyer", alt: "Envoyer de l'argent à un proche", tint: TILE_BG },
+  { id: "scan", img: scannerIcon, label: "Scanner", alt: "Scanner un QR code marchand", tint: TILE_BG },
 ];
 
 const container = {
@@ -55,7 +55,7 @@ export function QuickActions({ onActionClick }: QuickActionsProps) {
           <div className={`w-20 h-20 rounded-2xl ${action.tint} flex items-center justify-center mb-2 shadow-card overflow-hidden`}>
             <img
               src={action.img}
-              alt={action.label}
+              alt={action.alt}
               loading="lazy"
               width={1024}
               height={1024}

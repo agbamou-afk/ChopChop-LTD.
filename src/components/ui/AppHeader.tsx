@@ -195,9 +195,9 @@ export function AppHeader({
             {userInitial}
           </div>
           <div className="flex-1 min-w-0">
-            <h1 className="text-base font-bold text-foreground truncate">
+            <p className="text-base font-bold text-foreground truncate">
               Bonjour, {userName} ! 👋
-            </h1>
+            </p>
             <p className="text-sm text-muted-foreground truncate">
               {subtitle ?? (isDriverMode ? "Prêt à prendre des courses ?" : "Prêt à vous déplacer ?")}
             </p>

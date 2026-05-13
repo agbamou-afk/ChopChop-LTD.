@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
 import logo from "@/assets/logo.png";
+import { Seo } from "@/components/Seo";
 
 export default function ProfileInfo() {
   const navigate = useNavigate();
@@ -76,6 +77,11 @@ export default function ProfileInfo() {
 
   return (
     <div className="min-h-screen bg-background pb-12">
+      <Seo
+        title="Mon profil — CHOP CHOP"
+        description="Gérez vos informations personnelles, votre photo de profil et la sécurité de votre compte CHOP CHOP."
+        canonical="/profile"
+      />
       <header className="gradient-primary text-primary-foreground rounded-b-3xl px-4 pt-6 pb-8">
         <div className="flex items-center gap-3">
           <button onClick={() => navigate(-1)} className="p-2 -ml-2 rounded-full hover:bg-white/10">
@@ -91,7 +97,7 @@ export default function ProfileInfo() {
           <div className="relative">
             <div className="w-24 h-24 rounded-full bg-muted flex items-center justify-center text-3xl font-bold text-primary overflow-hidden">
               {avatarUrl ? (
-                <img src={avatarUrl} alt="avatar" className="w-full h-full object-cover" />
+                <img src={avatarUrl} alt="Photo de profil de l'utilisateur" className="w-full h-full object-cover" />
               ) : (
                 (fullName || email)[0]?.toUpperCase() ?? "?"
               )}
