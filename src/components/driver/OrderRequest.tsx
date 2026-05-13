@@ -75,7 +75,7 @@ export function OrderRequest({ order, onAccept, onDecline }: OrderRequestProps) 
         </div>
         <div className="text-right">
           <p className="text-lg font-bold text-foreground">
-            {formatMoney(order.estimatedPrice)} GNF
+            {formatMoney(order.estimatedPrice)}
           </p>
           <p className="text-xs text-muted-foreground">{order.distance}</p>
         </div>

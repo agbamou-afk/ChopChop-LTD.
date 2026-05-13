@@ -58,11 +58,11 @@ export function ProductCard({
         <div className="flex items-center justify-between">
           <div>
             <p className="text-sm font-bold text-primary">
-              {formatMoney(price)} GNF
+              {formatMoney(price)}
             </p>
             {originalPrice && (
               <p className="text-xs text-muted-foreground line-through">
-                {formatMoney(originalPrice)} GNF
+                {formatMoney(originalPrice)}
               </p>
             )}
           </div>

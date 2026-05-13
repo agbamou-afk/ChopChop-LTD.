@@ -146,7 +146,7 @@ export function DriverOrdersView() {
               <div className="flex items-center justify-between py-3 px-4 bg-muted rounded-xl mb-4">
                 <span className="text-muted-foreground">Montant estimé</span>
                 <span className="text-xl font-bold text-foreground">
-                  {formatMoney(activeOrder.estimatedPrice)} GNF
+                  {formatMoney(activeOrder.estimatedPrice)}
                 </span>
               </div>
 

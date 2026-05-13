@@ -89,7 +89,7 @@ export function LiveRidesPanel() {
                 className="rounded-2xl bg-card border border-border p-4 shadow-card">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-xs font-semibold uppercase tracking-wide text-primary">{MODE_LABEL[r.mode]}</span>
-                  <span className="font-bold">{fmt(r.fare_gnf)} GNF</span>
+                  <span className="font-bold">{fmt(r.fare_gnf)}</span>
                 </div>
                 <div className="flex items-start gap-2 text-sm text-muted-foreground mb-3">
                   <MapPin className="w-4 h-4 mt-0.5 text-primary shrink-0" />
@@ -115,7 +115,7 @@ export function LiveRidesPanel() {
                 className="rounded-2xl bg-card border border-border p-4 shadow-card">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-xs font-semibold uppercase tracking-wide text-primary">{MODE_LABEL[r.mode]}</span>
-                  <span className="font-bold">{fmt(r.fare_gnf)} GNF</span>
+                  <span className="font-bold">{fmt(r.fare_gnf)}</span>
                 </div>
                 <div className="flex items-start gap-2 text-sm text-muted-foreground mb-3">
                   <Navigation className="w-4 h-4 mt-0.5 text-primary shrink-0" />

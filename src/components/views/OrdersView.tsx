@@ -141,7 +141,7 @@ export function OrdersView() {
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="font-semibold text-foreground">
-                    {formatMoney(order.price)} GNF
+                    {formatMoney(order.price)}
                   </span>
                   <ChevronRight className="w-4 h-4 text-muted-foreground" />
                 </div>

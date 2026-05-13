@@ -228,7 +228,7 @@ export function AppHeader({
             <Wallet className={`w-5 h-5 ${pillIconColor}`} />
             <div className="text-left">
               <p className="text-sm font-bold text-foreground leading-tight">
-                {formatted} GNF
+                {formatted}
               </p>
               <p className="text-[10px] text-muted-foreground leading-tight">
                 {amountLabel}

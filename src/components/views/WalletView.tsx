@@ -121,7 +121,7 @@ export function WalletView() {
         />
         {wallet && wallet.held_gnf > 0 && (
           <p className="text-xs text-muted-foreground mt-2 text-center">
-            {formatMoney(wallet.held_gnf)} GNF en attente
+            {formatMoney(wallet.held_gnf)} en attente
           </p>
         )}
       </motion.header>
@@ -231,7 +231,7 @@ export function WalletView() {
                       }`}
                     >
                       {dir === "in" ? "+" : "-"}
-                      {formatMoney(tx.amount_gnf)} GNF
+                      {formatMoney(tx.amount_gnf)}
                     </p>
                     <p className="text-xs text-muted-foreground">
                       {formatDate(tx.created_at)}

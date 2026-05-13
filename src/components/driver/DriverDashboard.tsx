@@ -30,7 +30,7 @@ export function DriverDashboard({
           <div>
             <p className="text-sm opacity-80">Gains du jour</p>
             <h2 className="text-3xl font-bold mt-1">
-              {formatMoney(todayEarnings)} GNF
+              {formatMoney(todayEarnings)}
             </h2>
           </div>
           <div className="p-3 bg-white/20 rounded-xl">
@@ -59,7 +59,7 @@ export function DriverDashboard({
             <span className="text-xs text-muted-foreground">Cette semaine</span>
           </div>
           <p className="text-lg font-bold text-foreground">
-            {formatMoney(weeklyEarnings)} GNF
+            {formatMoney(weeklyEarnings)}
           </p>
         </motion.div>
 

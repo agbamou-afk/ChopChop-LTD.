@@ -155,13 +155,13 @@ export default function AgentDashboard() {
             <div className="bg-muted/40 rounded-xl p-3">
               <p className="text-muted-foreground">Limite jour</p>
               <p className="font-semibold text-foreground">
-                {fmt(agent!.daily_limit_gnf)} GNF
+                {fmt(agent!.daily_limit_gnf)}
               </p>
             </div>
             <div className="bg-muted/40 rounded-xl p-3">
               <p className="text-muted-foreground">Float chargé</p>
               <p className="font-semibold text-foreground">
-                {fmt(agent!.prepaid_float_gnf)} GNF
+                {fmt(agent!.prepaid_float_gnf)}
               </p>
             </div>
           </div>
@@ -189,7 +189,7 @@ export default function AgentDashboard() {
                 <li key={t.id} className="px-5 py-3 flex items-center justify-between">
                   <div className="min-w-0">
                     <p className="font-medium text-sm text-foreground">
-                      {fmt(t.amount_gnf)} GNF
+                      {fmt(t.amount_gnf)}
                     </p>
                     <p className="text-[11px] text-muted-foreground truncate">
                       {t.reference} · {new Date(t.created_at).toLocaleString("fr-FR")}
