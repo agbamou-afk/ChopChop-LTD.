@@ -85,7 +85,7 @@ async function logAttempt(
       priority: opts.priority ?? "normal",
       recipient: opts.recipient ?? null,
       external_id: opts.externalId ?? null,
-      payload: opts.payload ?? {},
+      payload: (opts.payload ?? {}) as any,
       error_message: opts.error ?? null,
     });
   } catch {
