@@ -58,10 +58,10 @@ export function HomeAssistantSheet({ open, onOpenChange, onAction, location }: P
       const next = [...t];
       const last = next[next.length - 1];
       if (!last || last.role !== "assistant") return next;
-      if (!res.ok) {
+      if (res.ok !== true) {
         next[next.length - 1] = {
           role: "assistant",
-          text: res.error || "Désolé, l'assistant n'est pas disponible.",
+          text: (res as { error?: string }).error || "Désolé, l'assistant n'est pas disponible.",
           error: true,
         };
       } else {
