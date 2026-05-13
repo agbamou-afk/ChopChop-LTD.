@@ -154,9 +154,10 @@ Deno.serve(async (req) => {
       else if (status === "rejected") summary.rejected++;
     }
 
-    await admin.from("app_settings")
-      .update({ value: { last_import_at: new Date().toISOString() } as never })
-      .eq("key", "orange_money");
+    const { data: cfgRow } = await admin
+      .from("app_settings").select("value").eq("key", "orange_money").maybeSingle();
+    const merged = { ...((cfgRow?.value as Record<string, unknown>) ?? {}), last_import_at: new Date().toISOString() };
+    await admin.from("app_settings").update({ value: merged as never }).eq("key", "orange_money");
 
     return new Response(JSON.stringify({ summary }), {
       status: 200,
