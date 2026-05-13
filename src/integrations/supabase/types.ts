@@ -1710,6 +1710,9 @@ export type Database = {
         }
       }
       analytics_summary: { Args: { p_days?: number }; Returns: Json }
+      can_access_admin: { Args: { _user_id: string }; Returns: boolean }
+      can_manage_operations: { Args: { _user_id: string }; Returns: boolean }
+      can_manage_wallet: { Args: { _user_id: string }; Returns: boolean }
       claim_first_admin: { Args: never; Returns: boolean }
       current_admin_role: {
         Args: { _user_id: string }
@@ -1969,6 +1972,7 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      wallet_ensure: { Args: { _party_type?: string }; Returns: string }
       wallet_hold: {
         Args: {
           p_amount_gnf: number

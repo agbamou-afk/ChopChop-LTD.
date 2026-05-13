@@ -18,6 +18,7 @@ import { BottomNav } from "@/components/ui/BottomNav";
 import { supabase } from "@/integrations/supabase/client";
 import { Seo } from "@/components/Seo";
 import { useAuthGuard } from "@/hooks/useAuthGuard";
+import { useAuth } from "@/contexts/AuthContext";
 import { notifications as notif } from "@/lib/notifications";
 import { useNavigate } from "react-router-dom";
 
@@ -40,7 +41,21 @@ const Index = () => {
   } | null>(null);
   const [showScanner, setShowScanner] = useState(false);
   const { requireAuth } = useAuthGuard();
+  const { roles } = useAuth();
+  const isDriver = roles.includes("driver");
   const navigate = useNavigate();
+
+  const enableDriverMode = () => {
+    if (!requireAuth()) return;
+    if (!isDriver) {
+      toast({
+        title: "Mode chauffeur indisponible",
+        description: "Votre compte n'a pas encore le rôle chauffeur.",
+      });
+      return;
+    }
+    setIsDriverMode(true);
+  };
 
   const handleAction = (action: string, params?: { destination?: string }) => {
     // "market" = browsing is allowed without account.
@@ -117,7 +132,7 @@ const Index = () => {
         return (
           <UserHome
             onActionClick={handleAction}
-            onToggleDriverMode={() => requireAuth(() => setIsDriverMode(true))}
+            onToggleDriverMode={enableDriverMode}
           />
         );
     }
