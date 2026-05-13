@@ -131,6 +131,28 @@ export const AIService = {
         "Évalue le niveau de risque à partir des signaux fournis et propose des actions humaines.",
       input: signals,
     }),
+
+  // ---------- Home Search Assistant ----------
+  askHome: (
+    userPrompt: string,
+    context?: { location?: string; locale?: string },
+  ) =>
+    call<{
+      answer: string;
+      suggested_action:
+        | "moto"
+        | "toktok"
+        | "food"
+        | "market"
+        | "send"
+        | "scan"
+        | "none";
+      suggested_action_label: string;
+    }>({
+      action: "user.assistant",
+      userPrompt,
+      input: context ?? {},
+    }),
 };
 
 export type { AICallOptions as AICall };
