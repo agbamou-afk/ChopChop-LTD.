@@ -32,6 +32,7 @@ import {
 } from "@/components/ui/sheet";
 import { TopUpOrangeMoney } from "@/components/wallet/TopUpOrangeMoney";
 import { useMemo } from "react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 type ActionId = "send" | "receive" | "scan" | "add";
 
