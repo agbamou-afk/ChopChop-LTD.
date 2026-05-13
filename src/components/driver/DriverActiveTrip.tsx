@@ -1,8 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Marker } from "react-map-gl";
 import { motion } from "framer-motion";
 import {
-  ChopMap, type ChopMapHandle, MapMarker, PinSet, RoutePolyline,
+  ChopMap, type ChopMapHandle, PinSet, RoutePolyline,
 } from "@/components/map";
 import {
   bbox as bboxOf, formatDuration, formatDistance, type LatLng,
