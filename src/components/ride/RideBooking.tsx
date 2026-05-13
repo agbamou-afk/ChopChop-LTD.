@@ -3,51 +3,11 @@ import { formatGNF } from "@/lib/format";
 import { MapPin, Navigation, X, Bike, Car, Clock, CreditCard, Loader2, LocateFixed, CheckCircle2 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { MapContainer, TileLayer, Marker, Polyline, useMap } from "react-leaflet";
-import L from "leaflet";
-import "leaflet/dist/leaflet.css";
+import { Marker } from "react-map-gl";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-
-// Fix default marker icon paths (Leaflet+bundlers issue)
-const pickupIcon = L.divIcon({
-  className: "",
-  html: `<div style="width:18px;height:18px;border-radius:9999px;background:hsl(var(--primary));border:3px solid white;box-shadow:0 2px 6px rgba(0,0,0,.3)"></div>`,
-  iconSize: [18, 18],
-  iconAnchor: [9, 9],
-});
-
-const destIcon = L.divIcon({
-  className: "",
-  html: `<div style="width:18px;height:18px;border-radius:9999px;background:hsl(var(--secondary));border:3px solid white;box-shadow:0 2px 6px rgba(0,0,0,.3)"></div>`,
-  iconSize: [18, 18],
-  iconAnchor: [9, 9],
-});
-
-const driverIcon = L.divIcon({
-  className: "",
-  html: `<div style="width:28px;height:28px;border-radius:9999px;background:white;border:2px solid hsl(var(--primary));display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,.25);font-size:14px">🛵</div>`,
-  iconSize: [28, 28],
-  iconAnchor: [14, 14],
-});
-
-function Recenter({ position }: { position: [number, number] }) {
-  const map = useMap();
-  useEffect(() => {
-    map.flyTo(position, 15, { duration: 0.8 });
-  }, [position, map]);
-  return null;
-}
-
-function FitBounds({ a, b }: { a: [number, number]; b: [number, number] | null }) {
-  const map = useMap();
-  useEffect(() => {
-    if (!b) return;
-    const bounds = L.latLngBounds([a, b]);
-    map.fitBounds(bounds, { padding: [60, 60], maxZoom: 15 });
-  }, [a, b, map]);
-  return null;
-}
+import { ChopMap, type ChopMapHandle, MapMarker, PinSet, RoutePolyline, DriverCluster } from "@/components/map";
+import { RoutingService, decodePolyline, bbox as bboxOf, formatDistance, formatDuration } from "@/lib/maps";
 
 interface Suggestion {
   label: string;
@@ -91,16 +51,19 @@ export function RideBooking({ type, onClose, onBook, initialDestination }: RideB
   const [activeField, setActiveField] = useState<"pickup" | "destination" | null>(null);
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [searching, setSearching] = useState(false);
-  const [route, setRoute] = useState<[number, number][]>([]);
+  const [routePolyline, setRoutePolyline] = useState<string | null>(null);
   const [distanceKm, setDistanceKm] = useState<number | null>(null);
   const [durationMin, setDurationMin] = useState<number | null>(null);
   const [confirmed, setConfirmed] = useState(false);
+  const [routing, setRouting] = useState(false);
+  const [routeError, setRouteError] = useState<string | null>(null);
   const [fare, setFare] = useState<{ base: number; perKm: number; currency: string }>({
     base: type === "moto" ? 5000 : 8000,
     perKm: type === "moto" ? 1000 : 1500,
     currency: "GNF",
   });
   const debounceRef = useRef<number | null>(null);
+  const mapRef = useRef<ChopMapHandle>(null);
   const option = rideOptions[type];
   const Icon = option.icon;
 
@@ -115,19 +78,6 @@ export function RideBooking({ type, onClose, onBook, initialDestination }: RideB
         if (data) setFare({ base: Number(data.base_price), perKm: Number(data.price_per_km), currency: data.currency });
       });
   }, [type]);
-
-  // Mock 4 nearby drivers within ~800m of pickup
-  const drivers = useMemo(() => {
-    const list: [number, number][] = [];
-    for (let i = 0; i < 4; i++) {
-      const dLat = (Math.random() - 0.5) * 0.012;
-      const dLng = (Math.random() - 0.5) * 0.012;
-      list.push([pickupCoords[0] + dLat, pickupCoords[1] + dLng]);
-    }
-    return list;
-    // re-roll when pickup changes meaningfully
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pickupCoords[0].toFixed(3), pickupCoords[1].toFixed(3)]);
 
   const handleLocateMe = () => {
     if (!navigator.geolocation) {
@@ -214,31 +164,50 @@ export function RideBooking({ type, onClose, onBook, initialDestination }: RideB
     setActiveField(null);
   };
 
-  // Fetch route when both ends set
+  // Fetch route via RoutingService (Google Directions proxy) when both ends are set
   useEffect(() => {
     if (!destCoords) {
-      setRoute([]);
+      setRoutePolyline(null);
       setDistanceKm(null);
       setDurationMin(null);
+      setRouteError(null);
       return;
     }
-    const [a, b] = [pickupCoords, destCoords];
-    const url = `https://router.project-osrm.org/route/v1/driving/${a[1]},${a[0]};${b[1]},${b[0]}?overview=full&geometries=geojson`;
-    fetch(url)
-      .then((r) => r.json())
-      .then((data) => {
-        const r0 = data.routes?.[0];
-        if (!r0) return;
-        const coords: [number, number][] = r0.geometry.coordinates.map(
-          (c: [number, number]) => [c[1], c[0]],
-        );
-        setRoute(coords);
-        const km = r0.distance / 1000;
+    let cancelled = false;
+    setRouting(true);
+    setRouteError(null);
+    RoutingService.route(
+      { lat: pickupCoords[0], lng: pickupCoords[1] },
+      { lat: destCoords[0], lng: destCoords[1] },
+      type === "moto" ? "two_wheeler" : "driving",
+    )
+      .then((r) => {
+        if (cancelled) return;
+        setRoutePolyline(r.polyline);
+        setDistanceKm(r.distanceM / 1000);
+        setDurationMin(Math.max(1, Math.round(r.durationS / 60)));
+        // Fit map to route bounds
+        const ne = r.bbox.northeast, sw = r.bbox.southwest;
+        mapRef.current?.fitBounds([sw.lng, sw.lat, ne.lng, ne.lat], 80);
+      })
+      .catch((e) => {
+        if (cancelled) return;
+        setRouteError(e?.message ?? "Itinéraire indisponible");
+        // Fallback: straight-line estimate so the user still sees a price
+        const km = haversineKm(pickupCoords, destCoords);
         setDistanceKm(km);
         setDurationMin(Math.max(2, Math.round((km / option.speedKmh) * 60)));
       })
-      .catch(() => {});
-  }, [pickupCoords, destCoords, option.speedKmh]);
+      .finally(() => { if (!cancelled) setRouting(false); });
+    return () => { cancelled = true; };
+  }, [pickupCoords, destCoords, type, option.speedKmh]);
+
+  // Recenter map when pickup changes alone (no destination yet)
+  useEffect(() => {
+    if (!destCoords) {
+      mapRef.current?.flyTo(pickupCoords[1], pickupCoords[0], 14);
+    }
+  }, [pickupCoords, destCoords]);
 
   const estimatedPrice = fare.base + fare.perKm * (distanceKm ?? 5);
 
@@ -340,44 +309,27 @@ export function RideBooking({ type, onClose, onBook, initialDestination }: RideB
 
       {/* Interactive map */}
       <div className="flex-1 bg-muted relative overflow-hidden">
-        <MapContainer
-          center={pickupCoords}
-          zoom={14}
-          scrollWheelZoom
-          className="w-full h-full z-0"
+        <ChopMap
+          ref={mapRef}
+          className="absolute inset-0 w-full h-full"
+          initialView={{ longitude: pickupCoords[1], latitude: pickupCoords[0], zoom: 14 }}
         >
-          <TileLayer
-            attribution='&copy; OpenStreetMap'
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          />
+          {routePolyline && <RoutePolyline encoded={routePolyline} />}
+          <DriverCluster variant={type === "toktok" ? "toktok" : "moto"} />
+          {/* Draggable pickup */}
           <Marker
-            position={pickupCoords}
-            icon={pickupIcon}
+            longitude={pickupCoords[1]}
+            latitude={pickupCoords[0]}
+            anchor="bottom"
             draggable
-            eventHandlers={{
-              dragend: (e) => {
-                const m = e.target as L.Marker;
-                const ll = m.getLatLng();
-                setPickupCoords([ll.lat, ll.lng]);
-              },
-            }}
-          />
-          {destCoords && <Marker position={destCoords} icon={destIcon} />}
-          {drivers.map((d, i) => (
-            <Marker key={i} position={d} icon={driverIcon} />
-          ))}
-          {route.length > 0 && (
-            <Polyline
-              positions={route}
-              pathOptions={{ color: "hsl(138, 64%, 39%)", weight: 5, opacity: 0.85 }}
-            />
+            onDragEnd={(e) => setPickupCoords([e.lngLat.lat, e.lngLat.lng])}
+          >
+            <MapMarker variant="pickup" pulse={!destCoords} label="Départ" size={36} />
+          </Marker>
+          {destCoords && (
+            <PinSet dropoff={{ lat: destCoords[0], lng: destCoords[1] }} pulseActive="dropoff" />
           )}
-          {destCoords ? (
-            <FitBounds a={pickupCoords} b={destCoords} />
-          ) : (
-            <Recenter position={pickupCoords} />
-          )}
-        </MapContainer>
+        </ChopMap>
         <button
           type="button"
           onClick={handleLocateMe}
@@ -391,9 +343,22 @@ export function RideBooking({ type, onClose, onBook, initialDestination }: RideB
             <LocateFixed className="w-5 h-5 text-primary" />
           )}
         </button>
-        <div className="absolute top-4 left-4 z-[400] bg-card/95 backdrop-blur shadow-card rounded-full px-3 py-1.5 text-xs font-medium text-foreground">
-          {drivers.length} chauffeurs à proximité
-        </div>
+        {routing && (
+          <div className="absolute top-4 left-4 z-[400] bg-card/95 backdrop-blur shadow-card rounded-full px-3 py-1.5 text-xs font-medium text-foreground flex items-center gap-2">
+            <Loader2 className="w-3.5 h-3.5 animate-spin text-primary" />
+            Calcul de l'itinéraire…
+          </div>
+        )}
+        {!routing && distanceKm !== null && durationMin !== null && (
+          <div className="absolute top-4 left-4 z-[400] bg-card/95 backdrop-blur shadow-card rounded-full px-3 py-1.5 text-xs font-medium text-foreground">
+            {formatDuration(durationMin * 60)} • {formatDistance((distanceKm ?? 0) * 1000)}
+          </div>
+        )}
+        {routeError && (
+          <div className="absolute top-14 left-4 z-[400] bg-destructive/10 text-destructive shadow-card rounded-full px-3 py-1 text-[11px]">
+            Itinéraire estimé
+          </div>
+        )}
       </div>
 
       {/* Bottom sheet */}
