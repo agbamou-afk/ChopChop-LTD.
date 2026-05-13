@@ -6,18 +6,19 @@ import { Badge } from "@/components/ui/badge";
 import { AdminSidebar } from "./AdminSidebar";
 import { AdminGuard } from "./AdminGuard";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
+import { useAuth } from "@/contexts/AuthContext";
 import { ROLE_LABELS } from "@/lib/admin/permissions";
-import { supabase } from "@/integrations/supabase/client";
 import { useHasNotch } from "@/hooks/useHasNotch";
 import logo from "@/assets/logo.png";
 
 export function AdminLayout() {
   const navigate = useNavigate();
   const { user, role } = useAdminAuth();
+  const { signOut: signOutGlobal } = useAuth();
   const hasNotch = useHasNotch();
 
   const signOut = async () => {
-    await supabase.auth.signOut();
+    await signOutGlobal();
     navigate("/auth", { replace: true });
   };
 
