@@ -167,7 +167,7 @@ export function WalletView() {
                 Rechargez chez un agent CHOP CHOP pour continuer à payer vos courses et vos repas.
               </p>
             </div>
-            <Button size="sm" variant="outline" onClick={() => setQrOpen(true)}>
+            <Button size="sm" variant="outline" onClick={() => setTopUpOpen(true)}>
               Recharger
             </Button>
           </div>
