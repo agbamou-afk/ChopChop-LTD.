@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 export type Wallet = {
@@ -28,12 +28,14 @@ export type WalletProfile = {
   phone: string | null;
 };
 
-export function useWallet() {
+export function useWallet(partyType: "client" | "driver" = "client") {
   const [userId, setUserId] = useState<string | null>(null);
   const [wallet, setWallet] = useState<Wallet | null>(null);
   const [transactions, setTransactions] = useState<WalletTransaction[]>([]);
   const [profile, setProfile] = useState<WalletProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
 
   const load = useCallback(async (uid: string | null) => {
     if (!uid) {
@@ -44,13 +46,15 @@ export function useWallet() {
       return;
     }
     setLoading(true);
+    setError(null);
 
-    const { data: w } = await supabase
+    const { data: w, error: wErr } = await supabase
       .from("wallets")
       .select("id, balance_gnf, held_gnf, currency, status")
       .eq("owner_user_id", uid)
-      .eq("party_type", "client")
+      .eq("party_type", partyType)
       .maybeSingle();
+    if (wErr) setError(wErr.message);
     setWallet(w as Wallet | null);
 
     const { data: p } = await supabase
@@ -72,7 +76,7 @@ export function useWallet() {
       setTransactions([]);
     }
     setLoading(false);
-  }, []);
+  }, [partyType]);
 
   useEffect(() => {
     let active = true;
@@ -96,9 +100,39 @@ export function useWallet() {
     };
   }, [load]);
 
-  const refresh = useCallback(() => load(userId), [load, userId]);
+  // Realtime: re-load on wallet or transaction changes for this user
+  useEffect(() => {
+    if (!userId) return;
+    if (channelRef.current) {
+      supabase.removeChannel(channelRef.current);
+      channelRef.current = null;
+    }
+    const ch = supabase
+      .channel(`wallet-${partyType}-${userId}-${Math.random().toString(36).slice(2)}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "wallets", filter: `owner_user_id=eq.${userId}` },
+        () => load(userId),
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "wallet_transactions", filter: `related_user_id=eq.${userId}` },
+        () => load(userId),
+      )
+      .subscribe();
+    channelRef.current = ch;
+    return () => {
+      supabase.removeChannel(ch);
+      channelRef.current = null;
+    };
+  }, [userId, partyType, load]);
 
-  return { userId, wallet, transactions, profile, loading, refresh };
+  const refresh = useCallback(() => load(userId), [load, userId]);
+  const balance = wallet?.balance_gnf ?? 0;
+  const held = wallet?.held_gnf ?? 0;
+  const available = Math.max(0, balance - held);
+
+  return { userId, wallet, balance, held, available, transactions, profile, loading, error, refresh };
 }
 
 export async function hashPin(pin: string, userId: string): Promise<string> {

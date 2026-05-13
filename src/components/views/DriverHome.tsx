@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { LiveRidesPanel } from "@/components/driver/LiveRidesPanel";
 import { LiveStrip } from "@/components/ui/LiveStrip";
+import { useWallet } from "@/hooks/useWallet";
 
 interface DriverHomeProps {
   onToggleDriverMode: () => void;
@@ -55,6 +56,7 @@ export function DriverHome({ onToggleDriverMode }: DriverHomeProps) {
   const [queue, setQueue] = useState<IncomingRequest[]>(mockOrders);
   const [current, setCurrent] = useState<IncomingRequest | null>(null);
   const [activeTrip, setActiveTrip] = useState<IncomingRequest | null>(null);
+  const { available: driverBalance } = useWallet("driver");
 
   // Auto-pop next request when online and idle
   useEffect(() => {
@@ -96,7 +98,7 @@ export function DriverHome({ onToggleDriverMode }: DriverHomeProps) {
         onToggleDriverMode={onToggleDriverMode}
         subtitle="Tableau de bord chauffeur"
         amountLabel="Gains du jour"
-        amountValue={185000}
+        amountValue={driverBalance}
         notificationCount={queue.length + (current ? 1 : 0)}
         location="Conakry, en service"
       />

@@ -979,6 +979,63 @@ export type Database = {
         }
         Relationships: []
       }
+      payment_provider_events: {
+        Row: {
+          amount_gnf: number
+          created_at: string
+          currency: string
+          event_type: string
+          id: string
+          match_confidence: number | null
+          matched_topup_request_id: string | null
+          matched_user_id: string | null
+          notes: string | null
+          payer_phone: string | null
+          processed_at: string | null
+          processing_status: string
+          provider: string
+          provider_transaction_id: string
+          raw_payload: Json
+          status: string
+        }
+        Insert: {
+          amount_gnf: number
+          created_at?: string
+          currency?: string
+          event_type?: string
+          id?: string
+          match_confidence?: number | null
+          matched_topup_request_id?: string | null
+          matched_user_id?: string | null
+          notes?: string | null
+          payer_phone?: string | null
+          processed_at?: string | null
+          processing_status?: string
+          provider: string
+          provider_transaction_id: string
+          raw_payload?: Json
+          status?: string
+        }
+        Update: {
+          amount_gnf?: number
+          created_at?: string
+          currency?: string
+          event_type?: string
+          id?: string
+          match_confidence?: number | null
+          matched_topup_request_id?: string | null
+          matched_user_id?: string | null
+          notes?: string | null
+          payer_phone?: string | null
+          processed_at?: string | null
+          processing_status?: string
+          provider?: string
+          provider_transaction_id?: string
+          raw_payload?: Json
+          status?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           account_status: string
@@ -1232,7 +1289,7 @@ export type Database = {
       }
       topup_requests: {
         Row: {
-          agent_user_id: string
+          agent_user_id: string | null
           amount_gnf: number
           cancelled_reason: string | null
           client_user_id: string
@@ -1241,13 +1298,17 @@ export type Database = {
           created_at: string
           expires_at: string
           id: string
+          matched_provider_transaction_id: string | null
+          notes: string | null
+          provider: string
           reference: string
           status: Database["public"]["Enums"]["topup_status"]
           transaction_id: string | null
           updated_at: string
+          user_phone: string | null
         }
         Insert: {
-          agent_user_id: string
+          agent_user_id?: string | null
           amount_gnf: number
           cancelled_reason?: string | null
           client_user_id: string
@@ -1256,13 +1317,17 @@ export type Database = {
           created_at?: string
           expires_at?: string
           id?: string
+          matched_provider_transaction_id?: string | null
+          notes?: string | null
+          provider?: string
           reference: string
           status?: Database["public"]["Enums"]["topup_status"]
           transaction_id?: string | null
           updated_at?: string
+          user_phone?: string | null
         }
         Update: {
-          agent_user_id?: string
+          agent_user_id?: string | null
           amount_gnf?: number
           cancelled_reason?: string | null
           client_user_id?: string
@@ -1271,10 +1336,14 @@ export type Database = {
           created_at?: string
           expires_at?: string
           id?: string
+          matched_provider_transaction_id?: string | null
+          notes?: string | null
+          provider?: string
           reference?: string
           status?: Database["public"]["Enums"]["topup_status"]
           transaction_id?: string | null
           updated_at?: string
+          user_phone?: string | null
         }
         Relationships: [
           {
@@ -1661,6 +1730,7 @@ export type Database = {
           user_id: string
         }[]
       }
+      gen_topup_reference: { Args: never; Returns: string }
       has_admin_role: {
         Args: {
           _role: Database["public"]["Enums"]["admin_role"]
@@ -1840,6 +1910,35 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      wallet_admin_credit: {
+        Args: {
+          p_amount_gnf: number
+          p_provider_tx_id?: string
+          p_reason: string
+          p_user_id: string
+        }
+        Returns: {
+          amount_gnf: number
+          completed_at: string | null
+          created_at: string
+          description: string | null
+          from_wallet_id: string | null
+          id: string
+          metadata: Json
+          reference: string
+          related_entity: string | null
+          related_user_id: string | null
+          status: Database["public"]["Enums"]["txn_status"]
+          to_wallet_id: string | null
+          type: Database["public"]["Enums"]["txn_type"]
+        }
+        SetofOptions: {
+          from: "*"
+          to: "wallet_transactions"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       wallet_capture: {
         Args: {
           p_actual_amount_gnf?: number
@@ -1956,7 +2055,7 @@ export type Database = {
       wallet_topup_cancel: {
         Args: { p_reason?: string; p_topup_id: string }
         Returns: {
-          agent_user_id: string
+          agent_user_id: string | null
           amount_gnf: number
           cancelled_reason: string | null
           client_user_id: string
@@ -1965,10 +2064,14 @@ export type Database = {
           created_at: string
           expires_at: string
           id: string
+          matched_provider_transaction_id: string | null
+          notes: string | null
+          provider: string
           reference: string
           status: Database["public"]["Enums"]["topup_status"]
           transaction_id: string | null
           updated_at: string
+          user_phone: string | null
         }
         SetofOptions: {
           from: "*"
@@ -2004,7 +2107,7 @@ export type Database = {
       wallet_topup_create: {
         Args: { p_amount_gnf: number; p_client_user_id: string }
         Returns: {
-          agent_user_id: string
+          agent_user_id: string | null
           amount_gnf: number
           cancelled_reason: string | null
           client_user_id: string
@@ -2013,14 +2116,70 @@ export type Database = {
           created_at: string
           expires_at: string
           id: string
+          matched_provider_transaction_id: string | null
+          notes: string | null
+          provider: string
           reference: string
           status: Database["public"]["Enums"]["topup_status"]
           transaction_id: string | null
           updated_at: string
+          user_phone: string | null
         }
         SetofOptions: {
           from: "*"
           to: "topup_requests"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      wallet_topup_om_create: {
+        Args: { p_amount_gnf: number }
+        Returns: {
+          agent_user_id: string | null
+          amount_gnf: number
+          cancelled_reason: string | null
+          client_user_id: string
+          confirmation_code: string
+          confirmed_at: string | null
+          created_at: string
+          expires_at: string
+          id: string
+          matched_provider_transaction_id: string | null
+          notes: string | null
+          provider: string
+          reference: string
+          status: Database["public"]["Enums"]["topup_status"]
+          transaction_id: string | null
+          updated_at: string
+          user_phone: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "topup_requests"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      wallet_topup_om_credit: {
+        Args: { p_event_id: string; p_topup_request_id: string }
+        Returns: {
+          amount_gnf: number
+          completed_at: string | null
+          created_at: string
+          description: string | null
+          from_wallet_id: string | null
+          id: string
+          metadata: Json
+          reference: string
+          related_entity: string | null
+          related_user_id: string | null
+          status: Database["public"]["Enums"]["txn_status"]
+          to_wallet_id: string | null
+          type: Database["public"]["Enums"]["txn_type"]
+        }
+        SetofOptions: {
+          from: "*"
+          to: "wallet_transactions"
           isOneToOne: true
           isSetofReturn: false
         }
@@ -2089,7 +2248,15 @@ export type Database = {
       report_status: "open" | "reviewed" | "actioned" | "dismissed"
       ride_mode: "moto" | "toktok" | "food"
       ride_status: "pending" | "in_progress" | "completed" | "cancelled"
-      topup_status: "pending" | "confirmed" | "expired" | "cancelled"
+      topup_status:
+        | "pending"
+        | "confirmed"
+        | "expired"
+        | "cancelled"
+        | "matched"
+        | "needs_review"
+        | "credited"
+        | "failed"
       txn_status: "pending" | "completed" | "failed" | "reversed" | "cancelled"
       txn_type:
         | "topup"
@@ -2297,7 +2464,16 @@ export const Constants = {
       report_status: ["open", "reviewed", "actioned", "dismissed"],
       ride_mode: ["moto", "toktok", "food"],
       ride_status: ["pending", "in_progress", "completed", "cancelled"],
-      topup_status: ["pending", "confirmed", "expired", "cancelled"],
+      topup_status: [
+        "pending",
+        "confirmed",
+        "expired",
+        "cancelled",
+        "matched",
+        "needs_review",
+        "credited",
+        "failed",
+      ],
       txn_status: ["pending", "completed", "failed", "reversed", "cancelled"],
       txn_type: [
         "topup",
