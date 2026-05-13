@@ -11,13 +11,13 @@ const promos = [
   {
     id: 2,
     title: "Livraison gratuite",
-    subtitle: "Pour les commandes +200,000 GNF",
+    subtitle: "Pour les commandes +200\u00A0000\u00A0GNF",
     gradient: "gradient-secondary",
   },
   {
     id: 3,
     title: "Parrainez un ami",
-    subtitle: "Gagnez 50,000 GNF chacun",
+    subtitle: "Gagnez 50\u00A0000\u00A0GNF chacun",
     gradient: "bg-destructive",
   },
 ];
