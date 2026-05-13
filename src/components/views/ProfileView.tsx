@@ -12,9 +12,11 @@ import {
   Gift,
   ShieldCheck,
   MapPin,
+  Gauge,
 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/contexts/AuthContext";
+import { useAppEnv } from "@/contexts/AppEnvContext";
 import { toast } from "@/hooks/use-toast";
 
 interface ProfileViewProps {
@@ -33,6 +35,7 @@ const menuItems = [
 
 export function ProfileView({ isDriverMode, onToggleDriverMode }: ProfileViewProps) {
   const { profile, user, roles, isAdmin, signOut } = useAuth();
+  const { lowDataMode, setLowDataMode } = useAppEnv();
   const navigate = useNavigate();
 
   const isDriver = roles.includes("driver");
@@ -123,6 +126,28 @@ export function ProfileView({ isDriverMode, onToggleDriverMode }: ProfileViewPro
             </div>
           </div>
           <Switch checked={isDriverMode} onCheckedChange={handleDriverToggle} disabled={!isDriver && !isDriverMode} />
+        </motion.div>
+      </div>
+
+      {/* Low-data mode toggle */}
+      <div className="px-4 mb-4">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-card rounded-2xl p-4 shadow-card border border-border/60 flex items-center justify-between"
+        >
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="p-2 rounded-xl bg-secondary/15">
+              <Gauge className="w-5 h-5 text-secondary-foreground" />
+            </div>
+            <div className="min-w-0">
+              <p className="font-bold text-foreground">Mode données réduites</p>
+              <p className="text-sm text-muted-foreground truncate">
+                Images allégées, cartes simplifiées, moins d'animations.
+              </p>
+            </div>
+          </div>
+          <Switch checked={lowDataMode} onCheckedChange={setLowDataMode} />
         </motion.div>
       </div>
 
