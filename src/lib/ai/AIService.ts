@@ -12,7 +12,8 @@ export type AIAction =
   | "admin.summarize"
   | "support.draft_reply"
   | "marche.improve_listing"
-  | "fraud.assess";
+  | "fraud.assess"
+  | "user.assistant";
 
 export interface AICallOptions {
   action: AIAction;
@@ -27,7 +28,7 @@ export interface AICallOptions {
 
 export interface AIResult<TJson = unknown> {
   ok: true;
-  assistant: "admin" | "support" | "marche" | "fraud";
+  assistant: "admin" | "support" | "marche" | "fraud" | "user";
   action: string;
   model: string;
   provider: string;
@@ -129,6 +130,28 @@ export const AIService = {
       userPrompt:
         "Évalue le niveau de risque à partir des signaux fournis et propose des actions humaines.",
       input: signals,
+    }),
+
+  // ---------- Home Search Assistant ----------
+  askHome: (
+    userPrompt: string,
+    context?: { location?: string; locale?: string },
+  ) =>
+    call<{
+      answer: string;
+      suggested_action:
+        | "moto"
+        | "toktok"
+        | "food"
+        | "market"
+        | "send"
+        | "scan"
+        | "none";
+      suggested_action_label: string;
+    }>({
+      action: "user.assistant",
+      userPrompt,
+      input: context ?? {},
     }),
 };
 

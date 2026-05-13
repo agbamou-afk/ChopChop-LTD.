@@ -1,11 +1,16 @@
-import { Search } from "lucide-react";
+import { Search, Sparkles } from "lucide-react";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { HomeAssistantSheet } from "@/components/ai/HomeAssistantSheet";
 
 interface SmartSearchBarProps {
   prompts?: string[];
+  /** Called when the assistant suggests a primary action (moto, food, etc.). */
+  onAction?: (action: string) => void;
+  /** Optional click override; if provided, replaces the default AI assistant. */
   onClick?: () => void;
   intervalMs?: number;
+  location?: string;
 }
 
 const DEFAULT_PROMPTS = [
@@ -16,8 +21,15 @@ const DEFAULT_PROMPTS = [
   "Trouver un chauffeur",
 ];
 
-export function SmartSearchBar({ prompts = DEFAULT_PROMPTS, onClick, intervalMs = 2400 }: SmartSearchBarProps) {
+export function SmartSearchBar({
+  prompts = DEFAULT_PROMPTS,
+  onAction,
+  onClick,
+  intervalMs = 2400,
+  location,
+}: SmartSearchBarProps) {
   const [idx, setIdx] = useState(0);
+  const [open, setOpen] = useState(false);
 
   useEffect(() => {
     const id = setInterval(() => setIdx((i) => (i + 1) % prompts.length), intervalMs);
@@ -25,28 +37,41 @@ export function SmartSearchBar({ prompts = DEFAULT_PROMPTS, onClick, intervalMs 
   }, [prompts.length, intervalMs]);
 
   return (
-    <button
-      onClick={onClick}
-      className="w-full h-14 flex items-center gap-3 px-4 bg-card rounded-2xl shadow-soft border border-border/60 text-left hover:border-primary/40 transition-colors group"
-    >
-      <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 group-hover:bg-primary/15 transition-colors">
-        <Search className="w-4 h-4 text-primary" />
-      </div>
-      <div className="relative flex-1 h-5 overflow-hidden">
-        <AnimatePresence mode="wait">
-          <motion.span
-            key={prompts[idx]}
-            initial={{ y: 14, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: -14, opacity: 0 }}
-            transition={{ duration: 0.35, ease: "easeOut" }}
-            className="absolute inset-0 flex items-center text-sm text-muted-foreground"
-          >
-            {prompts[idx]}
-          </motion.span>
-        </AnimatePresence>
-      </div>
-      <span className="hidden xs:inline text-[10px] uppercase tracking-wider text-muted-foreground/70">⌘K</span>
-    </button>
+    <>
+      <button
+        onClick={onClick ?? (() => setOpen(true))}
+        className="w-full h-14 flex items-center gap-3 px-4 bg-card rounded-2xl shadow-soft border border-border/60 text-left hover:border-primary/40 transition-colors group"
+        aria-label="Ouvrir l'assistant CHOP CHOP"
+      >
+        <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 group-hover:bg-primary/15 transition-colors">
+          <Search className="w-4 h-4 text-primary" />
+        </div>
+        <div className="relative flex-1 h-5 overflow-hidden">
+          <AnimatePresence mode="wait">
+            <motion.span
+              key={prompts[idx]}
+              initial={{ y: 14, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: -14, opacity: 0 }}
+              transition={{ duration: 0.35, ease: "easeOut" }}
+              className="absolute inset-0 flex items-center text-sm text-muted-foreground"
+            >
+              {prompts[idx]}
+            </motion.span>
+          </AnimatePresence>
+        </div>
+        <span className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-primary bg-primary/10 px-2 py-1 rounded-full">
+          <Sparkles className="w-3 h-3" /> IA
+        </span>
+      </button>
+      {!onClick && (
+        <HomeAssistantSheet
+          open={open}
+          onOpenChange={setOpen}
+          onAction={(a) => onAction?.(a)}
+          location={location}
+        />
+      )}
+    </>
   );
 }
