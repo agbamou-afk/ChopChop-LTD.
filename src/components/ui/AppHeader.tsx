@@ -33,8 +33,8 @@ interface AppHeaderProps {
 export function AppHeader({
   isDriverMode,
   onToggleDriverMode,
-  userName = "Alpha",
-  userInitial = "A",
+  userName,
+  userInitial,
   subtitle,
   amountLabel,
   amountValue,
@@ -46,12 +46,41 @@ export function AppHeader({
   const [menuOpen, setMenuOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [unread, setUnread] = useState(0);
+  const [profileName, setProfileName] = useState<string | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => setIsLoggedIn(!!data.session));
+    const loadProfile = async (userId: string) => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("display_name, first_name, full_name, email")
+        .eq("user_id", userId)
+        .maybeSingle();
+      const name =
+        data?.display_name ||
+        data?.first_name ||
+        data?.full_name?.split(" ")[0] ||
+        data?.email?.split("@")[0] ||
+        null;
+      setProfileName(name);
+    };
+    supabase.auth.getSession().then(({ data }) => {
+      setIsLoggedIn(!!data.session);
+      if (data.session?.user) {
+        const meta = data.session.user.user_metadata as any;
+        const fallback =
+          meta?.first_name ||
+          meta?.full_name?.split(" ")[0] ||
+          data.session.user.email?.split("@")[0] ||
+          null;
+        if (fallback) setProfileName(fallback);
+        loadProfile(data.session.user.id);
+      }
+    });
     const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
       setIsLoggedIn(!!session);
+      if (session?.user) loadProfile(session.user.id);
+      else setProfileName(null);
     });
     return () => sub.subscription.unsubscribe();
   }, []);
@@ -77,6 +106,10 @@ export function AppHeader({
   };
 
   const formatted = formatGNF(amountValue);
+
+  const displayName = userName ?? profileName ?? (isLoggedIn ? "" : "invité");
+  const displayInitial =
+    userInitial ?? (displayName ? displayName.charAt(0).toUpperCase() : "?");
 
   const cardClass = isDriverMode
     ? "relative overflow-hidden bg-card rounded-[28px] shadow-soft px-5 pt-4 pb-5 border border-secondary/30"
@@ -207,18 +240,27 @@ export function AppHeader({
 
         {/* Greeting row */}
         <div className="mt-4 flex items-center gap-3 relative">
-          <div className={`w-14 h-14 rounded-2xl bg-muted/70 flex items-center justify-center text-xl font-bold ${avatarColor} shrink-0 ring-1 ring-border/60`}>
-            {userInitial}
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-[15px] font-bold text-foreground truncate leading-tight">
-              Bonjour, {userName} 👋
-            </p>
-            <button className="mt-0.5 inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors">
-              <MapPin className="w-3 h-3 text-primary" />
-              <span className="truncate max-w-[160px]">{location}</span>
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={() => navigate(isLoggedIn ? "/profile" : "/auth")}
+            className="flex-1 min-w-0 flex items-center gap-3 -m-1 p-1 rounded-2xl hover:bg-muted/40 active:scale-[0.99] transition text-left"
+            aria-label={isLoggedIn ? "Voir mon profil" : "Se connecter"}
+          >
+            <div className={`w-14 h-14 rounded-2xl bg-muted/70 flex items-center justify-center text-xl font-bold ${avatarColor} shrink-0 ring-1 ring-border/60`}>
+              {displayInitial}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[15px] font-bold text-foreground truncate leading-tight">
+                {isLoggedIn
+                  ? `Bonjour, ${displayName || "vous"} 👋`
+                  : "Bonjour, invité 👋"}
+              </p>
+              <span className="mt-0.5 inline-flex items-center gap-1 text-xs text-muted-foreground">
+                <MapPin className="w-3 h-3 text-primary" />
+                <span className="truncate max-w-[160px]">{location}</span>
+              </span>
+            </div>
+          </button>
           <div className="flex items-center gap-1.5 shrink-0">
             <span className="relative flex h-2 w-2">
               <span className="absolute inline-flex h-full w-full rounded-full bg-success opacity-75 pulse-dot" />
