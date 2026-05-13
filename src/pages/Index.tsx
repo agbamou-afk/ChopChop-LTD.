@@ -20,7 +20,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { Seo } from "@/components/Seo";
 import { useAuthGuard } from "@/hooks/useAuthGuard";
 import { notifications as notif } from "@/lib/notifications";
-import { formatGNF } from "@/lib/format";
 
 export type RideType = "moto" | "toktok" | null;
 export type ActiveView = "home" | "food" | "market" | "wallet" | "profile" | "orders";
