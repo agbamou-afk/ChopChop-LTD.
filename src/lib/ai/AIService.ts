@@ -12,7 +12,8 @@ export type AIAction =
   | "admin.summarize"
   | "support.draft_reply"
   | "marche.improve_listing"
-  | "fraud.assess";
+  | "fraud.assess"
+  | "user.assistant";
 
 export interface AICallOptions {
   action: AIAction;
@@ -27,7 +28,7 @@ export interface AICallOptions {
 
 export interface AIResult<TJson = unknown> {
   ok: true;
-  assistant: "admin" | "support" | "marche" | "fraud";
+  assistant: "admin" | "support" | "marche" | "fraud" | "user";
   action: string;
   model: string;
   provider: string;
