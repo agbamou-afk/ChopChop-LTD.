@@ -61,7 +61,7 @@ export function UserHome({ onActionClick, onToggleDriverMode }: UserHomeProps) {
       {/* Content */}
       <div className="px-4 mt-5 space-y-6">
         {/* Universal search — dynamic, inviting */}
-        <SmartSearchBar onClick={() => onActionClick("moto")} />
+        <SmartSearchBar onAction={onActionClick} location={`${userLocation}, Conakry`} />
 
         {/* Live system pulse — ecosystem gravity */}
         <div className="flex gap-2 overflow-x-auto scrollbar-hide -mx-4 px-4">
