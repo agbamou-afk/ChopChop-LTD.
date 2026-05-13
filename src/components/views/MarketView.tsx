@@ -1,153 +1,183 @@
+import { useEffect, useState, useCallback } from "react";
 import { motion } from "framer-motion";
-import { ArrowLeft, Search, Filter } from "lucide-react";
-import { useState } from "react";
-import { ProductCard } from "@/components/market/ProductCard";
-import { toast } from "sonner";
+import { ArrowLeft, Search, MapPin, Bell, Plus, MessageSquare, X } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { CategoryGrid } from "@/components/marche/CategoryGrid";
+import { FeaturedBanners } from "@/components/marche/FeaturedBanners";
+import { ListingCard, type ListingCardData } from "@/components/marche/ListingCard";
+import { ListingDetail } from "@/components/marche/ListingDetail";
+import { SellFlow } from "@/components/marche/SellFlow";
+import { InboxView } from "@/components/marche/InboxView";
+import { categoryLabel } from "@/lib/marche";
 
 interface MarketViewProps {
   onBack: () => void;
 }
 
-const categories = [
-  { id: "all", name: "Tout" },
-  { id: "electronics", name: "Électronique" },
-  { id: "fashion", name: "Mode" },
-  { id: "home", name: "Maison" },
-  { id: "beauty", name: "Beauté" },
-];
+type Screen = "home" | "detail" | "sell" | "inbox";
 
-const products = [
-  {
-    name: "Smartphone Samsung Galaxy A54",
-    image: "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=400&h=300&fit=crop",
-    price: 3500000,
-    originalPrice: 4200000,
-    rating: 4.7,
-    soldCount: 234,
-  },
-  {
-    name: "Écouteurs sans fil Bluetooth",
-    image: "https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=400&h=300&fit=crop",
-    price: 150000,
-    originalPrice: 200000,
-    rating: 4.5,
-    soldCount: 567,
-  },
-  {
-    name: "Robe traditionnelle Bazin",
-    image: "https://images.unsplash.com/photo-1594938298603-c8148c4dae35?w=400&h=300&fit=crop",
-    price: 350000,
-    rating: 4.9,
-    soldCount: 89,
-  },
-  {
-    name: "Montre connectée Sport",
-    image: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400&h=300&fit=crop",
-    price: 250000,
-    originalPrice: 350000,
-    rating: 4.3,
-    soldCount: 156,
-  },
-  {
-    name: "Sac à main en cuir",
-    image: "https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=400&h=300&fit=crop",
-    price: 180000,
-    rating: 4.6,
-    soldCount: 78,
-  },
-  {
-    name: "Parfum Oriental Luxe",
-    image: "https://images.unsplash.com/photo-1541643600914-78b084683601?w=400&h=300&fit=crop",
-    price: 120000,
-    originalPrice: 180000,
-    rating: 4.8,
-    soldCount: 312,
-  },
-];
+interface RawListing extends Omit<ListingCardData, "cover_url"> {
+  listing_images?: { url: string; position: number }[];
+}
 
 export function MarketView({ onBack }: MarketViewProps) {
-  const [activeCategory, setActiveCategory] = useState("all");
-  const [searchQuery, setSearchQuery] = useState("");
+  const [screen, setScreen] = useState<Screen>("home");
+  const [activeListing, setActiveListing] = useState<string | null>(null);
+  const [category, setCategory] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+  const [listings, setListings] = useState<ListingCardData[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const handleAddToCart = (productName: string) => {
-    toast.success(`${productName} ajouté au panier`);
-  };
+  const load = useCallback(async () => {
+    setLoading(true);
+    let q = supabase
+      .from("marketplace_listings")
+      .select(
+        "id, title, price_gnf, is_negotiable, is_urgent, delivery_available, neighborhood, commune, created_at, kind, listing_images(url, position)"
+      )
+      .eq("status", "active")
+      .order("created_at", { ascending: false })
+      .limit(60);
+    if (category) q = q.eq("category", category);
+    if (search.trim()) q = q.ilike("title", `%${search.trim()}%`);
+    const { data } = await q;
+    const mapped: ListingCardData[] = ((data ?? []) as unknown as RawListing[]).map((r) => ({
+      id: r.id,
+      title: r.title,
+      price_gnf: r.price_gnf,
+      is_negotiable: r.is_negotiable,
+      is_urgent: r.is_urgent,
+      delivery_available: r.delivery_available,
+      neighborhood: r.neighborhood,
+      commune: r.commune,
+      created_at: r.created_at,
+      kind: r.kind,
+      cover_url:
+        r.listing_images?.slice().sort((a, b) => a.position - b.position)[0]?.url ?? null,
+    }));
+    setListings(mapped);
+    setLoading(false);
+  }, [category, search]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  if (screen === "detail" && activeListing) {
+    return <ListingDetail listingId={activeListing} onBack={() => setScreen("home")} />;
+  }
+  if (screen === "sell") {
+    return (
+      <SellFlow
+        onClose={() => setScreen("home")}
+        onPosted={(id) => {
+          setActiveListing(id);
+          setScreen("detail");
+          load();
+        }}
+      />
+    );
+  }
+  if (screen === "inbox") {
+    return <InboxView onBack={() => setScreen("home")} />;
+  }
 
   return (
-    <div className="max-w-md mx-auto">
+    <div className="max-w-md mx-auto pb-24">
       {/* Header */}
-      <motion.header
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="bg-card px-4 pt-6 pb-4 sticky top-0 z-40"
-      >
-        <div className="flex items-center gap-4 mb-4">
-          <button
-            onClick={onBack}
-            className="p-2 rounded-full bg-muted hover:bg-muted/80 transition-colors"
-          >
+      <header className="bg-card px-4 pt-6 pb-4 sticky top-0 z-30 shadow-card">
+        <div className="flex items-center justify-between mb-3">
+          <button onClick={onBack} className="p-2 -ml-2 rounded-full hover:bg-muted">
             <ArrowLeft className="w-5 h-5 text-foreground" />
           </button>
-          <h1 className="text-xl font-bold text-foreground">Marché CHOP CHOP</h1>
-        </div>
-
-        {/* Search */}
-        <div className="flex items-center gap-2 mb-4">
-          <div className="flex-1 flex items-center gap-3 bg-muted rounded-xl px-4 py-3">
-            <Search className="w-5 h-5 text-muted-foreground" />
-            <input
-              type="text"
-              placeholder="Rechercher un produit..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="flex-1 bg-transparent placeholder:text-muted-foreground focus:outline-none text-sm text-foreground"
-            />
+          <div className="text-center flex-1">
+            <h1 className="text-lg font-bold text-foreground">Marché</h1>
+            <div className="flex items-center justify-center gap-1 text-[11px] text-muted-foreground">
+              <MapPin className="w-3 h-3 text-primary" />
+              <span>Kipé, Conakry</span>
+            </div>
           </div>
-          <button className="p-3 bg-primary rounded-xl">
-            <Filter className="w-5 h-5 text-primary-foreground" />
-          </button>
-        </div>
-
-        {/* Categories */}
-        <div className="flex gap-2 overflow-x-auto scrollbar-hide -mx-4 px-4 pb-2">
-          {categories.map((cat) => (
-            <button
-              key={cat.id}
-              onClick={() => setActiveCategory(cat.id)}
-              className={`px-4 py-2 rounded-full whitespace-nowrap transition-colors text-sm font-medium ${
-                activeCategory === cat.id
-                  ? "gradient-primary text-primary-foreground"
-                  : "bg-muted text-foreground hover:bg-muted/80"
-              }`}
-            >
-              {cat.name}
+          <div className="flex items-center gap-1">
+            <button onClick={() => setScreen("inbox")} className="p-2 rounded-full hover:bg-muted relative">
+              <MessageSquare className="w-5 h-5" />
             </button>
-          ))}
+            <button className="p-2 rounded-full hover:bg-muted">
+              <Bell className="w-5 h-5" />
+            </button>
+          </div>
         </div>
-      </motion.header>
 
-      {/* Products */}
-      <div className="px-4 pt-2 pb-6">
-        <div className="grid grid-cols-2 gap-3">
-          {products
-            .filter((p) =>
-              p.name.toLowerCase().includes(searchQuery.toLowerCase())
-            )
-            .map((product, index) => (
-              <motion.div
-                key={product.name}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.05 }}
-              >
-                <ProductCard
-                  {...product}
-                  onAddToCart={() => handleAddToCart(product.name)}
-                />
-              </motion.div>
-            ))}
+        <div className="flex items-center gap-2 bg-muted rounded-2xl px-4 py-3">
+          <Search className="w-5 h-5 text-muted-foreground shrink-0" />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Que cherchez-vous ?"
+            className="flex-1 bg-transparent placeholder:text-muted-foreground focus:outline-none text-sm text-foreground"
+          />
+          {search && (
+            <button onClick={() => setSearch("")}>
+              <X className="w-4 h-4 text-muted-foreground" />
+            </button>
+          )}
         </div>
+      </header>
+
+      <div className="px-4 pt-4 space-y-5">
+        <section>
+          <h2 className="text-sm font-semibold text-foreground mb-3">Catégories</h2>
+          <CategoryGrid active={category} onSelect={(id) => setCategory(category === id ? null : id)} />
+        </section>
+
+        <FeaturedBanners />
+
+        <section>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-sm font-semibold text-foreground">
+              {category ? categoryLabel(category) : search ? `Résultats : ${search}` : "Près de vous"}
+            </h2>
+            {(category || search) && (
+              <button
+                onClick={() => {
+                  setCategory(null);
+                  setSearch("");
+                }}
+                className="text-xs text-primary font-medium"
+              >
+                Réinitialiser
+              </button>
+            )}
+          </div>
+          {loading ? (
+            <div className="grid grid-cols-2 gap-3">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="aspect-square rounded-2xl bg-muted animate-pulse" />
+              ))}
+            </div>
+          ) : listings.length === 0 ? (
+            <div className="bg-card rounded-2xl p-8 text-center text-muted-foreground shadow-card">
+              <p className="font-medium">Aucune annonce pour le moment.</p>
+              <p className="text-xs mt-1">Soyez le premier à publier dans votre quartier.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-3">
+              {listings.map((l) => (
+                <ListingCard key={l.id} l={l} onClick={() => { setActiveListing(l.id); setScreen("detail"); }} />
+              ))}
+            </div>
+          )}
+        </section>
       </div>
+
+      {/* FAB Sell */}
+      <motion.button
+        whileTap={{ scale: 0.9 }}
+        onClick={() => setScreen("sell")}
+        className="fixed bottom-24 right-4 z-40 gradient-primary text-primary-foreground rounded-full px-5 py-3.5 shadow-elevated flex items-center gap-2 font-semibold"
+      >
+        <Plus className="w-5 h-5" /> Vendre
+      </motion.button>
     </div>
   );
 }
