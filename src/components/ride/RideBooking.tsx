@@ -9,6 +9,16 @@ import { supabase } from "@/integrations/supabase/client";
 import { ChopMap, type ChopMapHandle, MapMarker, PinSet, RoutePolyline, DriverCluster } from "@/components/map";
 import { RoutingService, decodePolyline, bbox as bboxOf, formatDistance, formatDuration } from "@/lib/maps";
 
+function haversineKm(a: [number, number], b: [number, number]): number {
+  const R = 6371;
+  const toRad = (d: number) => (d * Math.PI) / 180;
+  const dLat = toRad(b[0] - a[0]);
+  const dLng = toRad(b[1] - a[1]);
+  const h = Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(a[0])) * Math.cos(toRad(b[0])) * Math.sin(dLng / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(h));
+}
+
 interface Suggestion {
   label: string;
   sub: string;
