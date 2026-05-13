@@ -246,24 +246,15 @@ export function MarketView({ onBack }: MarketViewProps) {
           )}
 
           {loading ? (
-            <div className="grid grid-cols-2 gap-3">
-              {Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="aspect-square rounded-2xl bg-muted animate-pulse" />
-              ))}
-            </div>
+            <LoadingState variant="cards" rows={2} />
           ) : visible.length === 0 ? (
-            <div className="bg-card rounded-2xl p-8 text-center text-muted-foreground shadow-card">
-              <p className="font-medium">
-                {tab === "saved"
-                  ? "Aucune annonce sauvegardée."
-                  : "Aucune annonce pour le moment."}
-              </p>
-              <p className="text-xs mt-1">
-                {tab === "saved"
-                  ? "Touchez le cœur sur une annonce pour la retrouver ici."
-                  : "Soyez le premier à publier dans votre quartier."}
-              </p>
-            </div>
+            <EmptyState
+              icon={ShoppingBag}
+              title={tab === "saved" ? "Aucune annonce sauvegardée" : "Aucune annonce pour le moment"}
+              description={tab === "saved"
+                ? "Touchez le cœur sur une annonce pour la retrouver ici."
+                : "Soyez le premier à publier dans votre quartier."}
+            />
           ) : (
             <div className="grid grid-cols-2 gap-3">
               {visible.map((l) => (
