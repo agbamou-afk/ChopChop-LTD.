@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { formatGNF } from "@/lib/format";
 import { Package, MapPin, Clock, ChevronRight, Bike, UtensilsCrossed, ShoppingBag } from "lucide-react";
 
 const orders = [
@@ -55,7 +56,7 @@ const typeIcons = {
 
 export function OrdersView() {
   const formatMoney = (amount: number) =>
-    new Intl.NumberFormat("fr-GN").format(amount);
+    formatGNF(amount);
 
   return (
     <div className="max-w-md mx-auto">
@@ -140,7 +141,7 @@ export function OrdersView() {
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="font-semibold text-foreground">
-                    {formatMoney(order.price)} GNF
+                    {formatMoney(order.price)}
                   </span>
                   <ChevronRight className="w-4 h-4 text-muted-foreground" />
                 </div>

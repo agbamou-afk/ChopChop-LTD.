@@ -1,4 +1,5 @@
 import { motion, AnimatePresence } from "framer-motion";
+import { formatGNF } from "@/lib/format";
 import { MapPin, Navigation, Clock, User, X, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -19,7 +20,7 @@ interface OrderRequestProps {
 
 export function OrderRequest({ order, onAccept, onDecline }: OrderRequestProps) {
   const formatMoney = (amount: number) =>
-    new Intl.NumberFormat("fr-GN").format(amount);
+    formatGNF(amount);
 
   const typeLabels = {
     ride: "Course",
@@ -74,7 +75,7 @@ export function OrderRequest({ order, onAccept, onDecline }: OrderRequestProps) 
         </div>
         <div className="text-right">
           <p className="text-lg font-bold text-foreground">
-            {formatMoney(order.estimatedPrice)} GNF
+            {formatMoney(order.estimatedPrice)}
           </p>
           <p className="text-xs text-muted-foreground">{order.distance}</p>
         </div>

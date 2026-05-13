@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { formatGNF } from "@/lib/format";
 import { Bell, Menu, Wallet, ChevronRight, User, HelpCircle, FileText, LogIn, Car, UserCircle2, LogOut } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
@@ -61,7 +62,7 @@ export function AppHeader({
     toast({ title: "Déconnecté", description: "À bientôt sur CHOP CHOP" });
   };
 
-  const formatted = new Intl.NumberFormat("fr-GN").format(amountValue);
+  const formatted = formatGNF(amountValue);
 
   // Driver mode keeps a distinct accent (gold/secondary tint), client mode stays neutral.
   const cardClass = isDriverMode
@@ -227,7 +228,7 @@ export function AppHeader({
             <Wallet className={`w-5 h-5 ${pillIconColor}`} />
             <div className="text-left">
               <p className="text-sm font-bold text-foreground leading-tight">
-                {formatted} GNF
+                {formatted}
               </p>
               <p className="text-[10px] text-muted-foreground leading-tight">
                 {amountLabel}

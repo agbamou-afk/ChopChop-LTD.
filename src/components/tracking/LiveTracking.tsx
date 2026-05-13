@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { formatGNF } from "@/lib/format";
 import { motion, AnimatePresence } from "framer-motion";
 import { MapContainer, TileLayer, Marker, Polyline, useMap } from "react-leaflet";
 import L from "leaflet";
@@ -161,7 +162,7 @@ export function LiveTracking({ mode, pickupCoords, destCoords, fare, onClose, ho
     return `${m}:${r.toString().padStart(2, "0")}`;
   };
 
-  const fmt = (n: number) => new Intl.NumberFormat("fr-GN").format(Math.round(n));
+  const fmt = (n: number) => formatGNF(Math.round(n));
 
   const handleScanResult = (text: string) => {
     const code = text.trim().toUpperCase();
@@ -209,7 +210,7 @@ export function LiveTracking({ mode, pickupCoords, destCoords, fare, onClose, ho
       setPhase("completed");
       toast({
         title: "Transaction validée",
-        description: `${fmt(fare)} GNF débité · Note ${rating.toFixed(2)}★`,
+        description: `${fmt(fare)} débité · Note ${rating.toFixed(2)}★`,
       });
     })();
   };
@@ -333,7 +334,7 @@ export function LiveTracking({ mode, pickupCoords, destCoords, fare, onClose, ho
                   <p className="text-xs text-muted-foreground mt-0.5">Plaque {driver.plate}</p>
                 </div>
                 <div className="text-right">
-                  <p className="text-lg font-bold text-foreground">{fmt(fare)} GNF</p>
+                  <p className="text-lg font-bold text-foreground">{fmt(fare)}</p>
                   <p className="text-xs text-muted-foreground">
                     {phase === "atDestination" ? "À régler" : "Tarif fixe"}
                   </p>

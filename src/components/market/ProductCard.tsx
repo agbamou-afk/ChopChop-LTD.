@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { formatGNF } from "@/lib/format";
 import { Star, ShoppingCart } from "lucide-react";
 
 interface ProductCardProps {
@@ -21,7 +22,7 @@ export function ProductCard({
   onAddToCart,
 }: ProductCardProps) {
   const formatMoney = (amount: number) =>
-    new Intl.NumberFormat("fr-GN").format(amount);
+    formatGNF(amount);
 
   const discount = originalPrice
     ? Math.round(((originalPrice - price) / originalPrice) * 100)
@@ -57,11 +58,11 @@ export function ProductCard({
         <div className="flex items-center justify-between">
           <div>
             <p className="text-sm font-bold text-primary">
-              {formatMoney(price)} GNF
+              {formatMoney(price)}
             </p>
             {originalPrice && (
               <p className="text-xs text-muted-foreground line-through">
-                {formatMoney(originalPrice)} GNF
+                {formatMoney(originalPrice)}
               </p>
             )}
           </div>

@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { formatGNF } from "@/lib/format";
 import { TrendingUp, Calendar, Download, ChevronRight, Bike, UtensilsCrossed, Package } from "lucide-react";
 
 const weeklyData = [
@@ -54,7 +55,7 @@ const typeIcons = {
 
 export function DriverEarningsView() {
   const formatMoney = (amount: number) =>
-    new Intl.NumberFormat("fr-GN").format(amount);
+    formatGNF(amount);
 
   const totalWeekly = weeklyData.reduce((sum, d) => sum + d.amount, 0);
   const maxAmount = Math.max(...weeklyData.map((d) => d.amount));
@@ -76,7 +77,7 @@ export function DriverEarningsView() {
 
         <div className="text-center mb-6">
           <p className="text-sm opacity-80">Total cette semaine</p>
-          <h2 className="text-4xl font-bold mt-2">{formatMoney(totalWeekly)} GNF</h2>
+          <h2 className="text-4xl font-bold mt-2">{formatMoney(totalWeekly)}</h2>
           <div className="flex items-center justify-center gap-2 mt-2">
             <TrendingUp className="w-4 h-4" />
             <span className="text-sm">+18% vs semaine dernière</span>
@@ -170,7 +171,7 @@ export function DriverEarningsView() {
                 </div>
                 <div className="text-right">
                   <p className="font-semibold text-success">
-                    +{formatMoney(earning.amount)} GNF
+                    +{formatMoney(earning.amount)}
                   </p>
                   {earning.tip > 0 && (
                     <p className="text-xs text-secondary">

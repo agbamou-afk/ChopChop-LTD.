@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { formatGNF } from "@/lib/format";
 import { Clock, MapPin, Navigation, Phone, MessageCircle, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
@@ -26,7 +27,7 @@ export function DriverOrdersView() {
   });
 
   const formatMoney = (amount: number) =>
-    new Intl.NumberFormat("fr-GN").format(amount);
+    formatGNF(amount);
 
   const handleStatusUpdate = () => {
     if (!activeOrder) return;
@@ -145,7 +146,7 @@ export function DriverOrdersView() {
               <div className="flex items-center justify-between py-3 px-4 bg-muted rounded-xl mb-4">
                 <span className="text-muted-foreground">Montant estimé</span>
                 <span className="text-xl font-bold text-foreground">
-                  {formatMoney(activeOrder.estimatedPrice)} GNF
+                  {formatMoney(activeOrder.estimatedPrice)}
                 </span>
               </div>
 

@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { formatGNF } from "@/lib/format";
 import { TrendingUp, DollarSign, Clock, CheckCircle, XCircle, Car } from "lucide-react";
 
 interface DriverDashboardProps {
@@ -15,7 +16,7 @@ export function DriverDashboard({
   onlineHours,
 }: DriverDashboardProps) {
   const formatMoney = (amount: number) =>
-    new Intl.NumberFormat("fr-GN").format(amount);
+    formatGNF(amount);
 
   return (
     <div className="space-y-4">
@@ -29,7 +30,7 @@ export function DriverDashboard({
           <div>
             <p className="text-sm opacity-80">Gains du jour</p>
             <h2 className="text-3xl font-bold mt-1">
-              {formatMoney(todayEarnings)} GNF
+              {formatMoney(todayEarnings)}
             </h2>
           </div>
           <div className="p-3 bg-white/20 rounded-xl">
@@ -58,7 +59,7 @@ export function DriverDashboard({
             <span className="text-xs text-muted-foreground">Cette semaine</span>
           </div>
           <p className="text-lg font-bold text-foreground">
-            {formatMoney(weeklyEarnings)} GNF
+            {formatMoney(weeklyEarnings)}
           </p>
         </motion.div>
 

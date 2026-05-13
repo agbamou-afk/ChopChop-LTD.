@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { formatGNF } from "@/lib/format";
 import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -30,7 +31,7 @@ type AgentInfo = {
   prepaid_float: number;
 };
 
-const fmt = (n: number) => new Intl.NumberFormat("fr-GN").format(n);
+const fmt = (n: number) => formatGNF(n);
 
 export default function AgentTopup() {
   const navigate = useNavigate();
@@ -239,7 +240,7 @@ export default function AgentTopup() {
           <div className="text-right">
             <p className="text-[10px] text-primary-foreground/80 uppercase">Float</p>
             <p className="font-bold text-primary-foreground text-sm">
-              {fmt(agent?.prepaid_float ?? 0)} GNF
+              {fmt(agent?.prepaid_float ?? 0)}
             </p>
           </div>
         </div>
@@ -362,7 +363,7 @@ export default function AgentTopup() {
                   <strong>{client.full_name ?? client.phone ?? "le client"}</strong>.
                 </p>
                 <p className="text-2xl font-bold text-foreground my-2">
-                  {fmt(Number(amount))} GNF
+                  {fmt(Number(amount))}
                 </p>
                 <p className="text-xs text-muted-foreground">
                   Le client voit un code à 6 chiffres dans son app. Demandez-le-lui{" "}
@@ -411,7 +412,7 @@ export default function AgentTopup() {
               <CheckCircle2 className="w-14 h-14 text-success mx-auto mb-3" />
               <h2 className="text-lg font-bold text-foreground mb-1">Recharge réussie</h2>
               <p className="text-sm text-muted-foreground mb-4">
-                {fmt(Number(amount))} GNF crédités au client
+                {fmt(Number(amount))} crédités au client
               </p>
               <Button onClick={reset} className="w-full gradient-primary">
                 Nouvelle recharge
