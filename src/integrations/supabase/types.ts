@@ -92,6 +92,54 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_insights: {
+        Row: {
+          confidence: Database["public"]["Enums"]["insight_confidence"]
+          created_at: string
+          generated_by_user_id: string | null
+          generated_for_date: string
+          id: string
+          metrics: Json
+          recommendation: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          section: Database["public"]["Enums"]["insight_section"]
+          status: string
+          summary: string
+          title: string
+        }
+        Insert: {
+          confidence?: Database["public"]["Enums"]["insight_confidence"]
+          created_at?: string
+          generated_by_user_id?: string | null
+          generated_for_date?: string
+          id?: string
+          metrics?: Json
+          recommendation?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          section: Database["public"]["Enums"]["insight_section"]
+          status?: string
+          summary: string
+          title: string
+        }
+        Update: {
+          confidence?: Database["public"]["Enums"]["insight_confidence"]
+          created_at?: string
+          generated_by_user_id?: string | null
+          generated_for_date?: string
+          id?: string
+          metrics?: Json
+          recommendation?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          section?: Database["public"]["Enums"]["insight_section"]
+          status?: string
+          summary?: string
+          title?: string
+        }
+        Relationships: []
+      }
       ai_rate_limits: {
         Row: {
           count: number
@@ -164,6 +212,69 @@ export type Database = {
           tokens_input?: number | null
           tokens_output?: number | null
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      analytics_events: {
+        Row: {
+          anonymous_session_id: string | null
+          app_version: string | null
+          created_at: string
+          device_type: string | null
+          event_category: string
+          event_name: string
+          event_type: string
+          id: string
+          language: string | null
+          metadata: Json
+          os: string | null
+          route: string | null
+          service_area: string | null
+          user_id: string | null
+          zone_city: string | null
+          zone_commune: string | null
+          zone_country: string | null
+          zone_neighborhood: string | null
+        }
+        Insert: {
+          anonymous_session_id?: string | null
+          app_version?: string | null
+          created_at?: string
+          device_type?: string | null
+          event_category: string
+          event_name: string
+          event_type: string
+          id?: string
+          language?: string | null
+          metadata?: Json
+          os?: string | null
+          route?: string | null
+          service_area?: string | null
+          user_id?: string | null
+          zone_city?: string | null
+          zone_commune?: string | null
+          zone_country?: string | null
+          zone_neighborhood?: string | null
+        }
+        Update: {
+          anonymous_session_id?: string | null
+          app_version?: string | null
+          created_at?: string
+          device_type?: string | null
+          event_category?: string
+          event_name?: string
+          event_type?: string
+          id?: string
+          language?: string | null
+          metadata?: Json
+          os?: string | null
+          route?: string | null
+          service_area?: string | null
+          user_id?: string | null
+          zone_city?: string | null
+          zone_commune?: string | null
+          zone_country?: string | null
+          zone_neighborhood?: string | null
         }
         Relationships: []
       }
@@ -1049,6 +1160,42 @@ export type Database = {
           },
         ]
       }
+      user_consent: {
+        Row: {
+          basic_analytics: boolean
+          consent_version: number
+          created_at: string
+          location_improvements: boolean
+          marketing_analytics: boolean
+          personalization: boolean
+          security_fraud: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          basic_analytics?: boolean
+          consent_version?: number
+          created_at?: string
+          location_improvements?: boolean
+          marketing_analytics?: boolean
+          personalization?: boolean
+          security_fraud?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          basic_analytics?: boolean
+          consent_version?: number
+          created_at?: string
+          location_improvements?: boolean
+          marketing_analytics?: boolean
+          personalization?: boolean
+          security_fraud?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_pins: {
         Row: {
           pin_hash: string
@@ -1367,6 +1514,7 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      analytics_summary: { Args: { p_days?: number }; Returns: Json }
       claim_first_admin: { Args: never; Returns: boolean }
       current_admin_role: {
         Args: { _user_id: string }
@@ -1769,6 +1917,18 @@ export type Database = {
         | "finance_admin"
         | "god_admin"
       approval_status: "pending" | "approved" | "rejected" | "cancelled"
+      insight_confidence: "low" | "medium" | "high"
+      insight_section:
+        | "executive"
+        | "behavior"
+        | "mobility"
+        | "wallet"
+        | "marketplace"
+        | "driver"
+        | "merchant"
+        | "fraud"
+        | "growth"
+        | "recommendation"
       listing_kind: "merchant" | "community" | "service"
       listing_status: "active" | "sold" | "paused" | "removed"
       message_channel: "whatsapp" | "sms" | "inapp"
@@ -1961,6 +2121,19 @@ export const Constants = {
         "god_admin",
       ],
       approval_status: ["pending", "approved", "rejected", "cancelled"],
+      insight_confidence: ["low", "medium", "high"],
+      insight_section: [
+        "executive",
+        "behavior",
+        "mobility",
+        "wallet",
+        "marketplace",
+        "driver",
+        "merchant",
+        "fraud",
+        "growth",
+        "recommendation",
+      ],
       listing_kind: ["merchant", "community", "service"],
       listing_status: ["active", "sold", "paused", "removed"],
       message_channel: ["whatsapp", "sms", "inapp"],
