@@ -14,7 +14,7 @@ export async function requestApproval(params: {
       requested_by: user.id,
       module: params.module,
       action: params.action,
-      payload: params.payload ?? {},
+      payload: (params.payload ?? {}) as any,
     })
     .select()
     .single();
