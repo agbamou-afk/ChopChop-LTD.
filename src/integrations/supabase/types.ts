@@ -300,11 +300,11 @@ export type Database = {
           avatar_url: string | null
           created_at: string
           full_name: string | null
+          has_pin: boolean
           id: string
           kyc_level: number
           language: string
           phone: string | null
-          pin_hash: string | null
           updated_at: string
           user_id: string
         }
@@ -312,11 +312,11 @@ export type Database = {
           avatar_url?: string | null
           created_at?: string
           full_name?: string | null
+          has_pin?: boolean
           id?: string
           kyc_level?: number
           language?: string
           phone?: string | null
-          pin_hash?: string | null
           updated_at?: string
           user_id: string
         }
@@ -324,11 +324,11 @@ export type Database = {
           avatar_url?: string | null
           created_at?: string
           full_name?: string | null
+          has_pin?: boolean
           id?: string
           kyc_level?: number
           language?: string
           phone?: string | null
-          pin_hash?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -563,6 +563,24 @@ export type Database = {
           },
         ]
       }
+      user_pins: {
+        Row: {
+          pin_hash: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          pin_hash: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          pin_hash?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -685,7 +703,89 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      agent_topup_requests: {
+        Row: {
+          agent_user_id: string | null
+          amount_gnf: number | null
+          cancelled_reason: string | null
+          client_user_id: string | null
+          confirmed_at: string | null
+          created_at: string | null
+          expires_at: string | null
+          id: string | null
+          reference: string | null
+          status: Database["public"]["Enums"]["topup_status"] | null
+          transaction_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          agent_user_id?: string | null
+          amount_gnf?: number | null
+          cancelled_reason?: string | null
+          client_user_id?: string | null
+          confirmed_at?: string | null
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string | null
+          reference?: string | null
+          status?: Database["public"]["Enums"]["topup_status"] | null
+          transaction_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          agent_user_id?: string | null
+          amount_gnf?: number | null
+          cancelled_reason?: string | null
+          client_user_id?: string | null
+          confirmed_at?: string | null
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string | null
+          reference?: string | null
+          status?: Database["public"]["Enums"]["topup_status"] | null
+          transaction_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "topup_requests_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "wallet_transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      public_agents: {
+        Row: {
+          business_name: string | null
+          id: string | null
+          latitude: number | null
+          location: string | null
+          longitude: number | null
+          status: Database["public"]["Enums"]["wallet_status"] | null
+          user_id: string | null
+        }
+        Insert: {
+          business_name?: string | null
+          id?: string | null
+          latitude?: number | null
+          location?: string | null
+          longitude?: number | null
+          status?: Database["public"]["Enums"]["wallet_status"] | null
+          user_id?: string | null
+        }
+        Update: {
+          business_name?: string | null
+          id?: string | null
+          latitude?: number | null
+          location?: string | null
+          longitude?: number | null
+          status?: Database["public"]["Enums"]["wallet_status"] | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       admin_adjust_agent_float: {
