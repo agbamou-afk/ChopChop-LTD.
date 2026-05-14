@@ -36,7 +36,7 @@ export function DemoTestPanel() {
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
 
-  const run = async (key: string, fn: () => Promise<void>) => {
+  const run = async (key: string, fn: () => Promise<unknown>) => {
     setBusy(key);
     try { await fn(); } finally { setBusy(null); }
   };
