@@ -183,8 +183,78 @@ async function notify(opts: NotifyOptions): Promise<NotifyResult> {
   return { ok: attempts.some((a) => a.ok), attempts };
 }
 
+/**
+ * Deterministic priority routing: in-app → WhatsApp → SMS → email.
+ *
+ * Tries channels in this fixed order, stops at the first success, and
+ * skips channels with no recipient/template (logged as `skipped`). SMS
+ * is wired as a placeholder — it will be attempted only if a `sms`
+ * payload is supplied; otherwise it is recorded as skipped to keep
+ * downstream observability honest.
+ *
+ * Use this when you want fallback delivery without spamming every
+ * channel at once.
+ */
+const PRIORITY_ORDER: NotificationChannel[] = ["inapp", "whatsapp", "sms", "email"];
+
+async function notifyWithPriority(
+  opts: Omit<NotifyOptions, "channels" | "fanout">,
+): Promise<NotifyResult> {
+  const attempts: ChannelResult[] = [];
+  for (const channel of PRIORITY_ORDER) {
+    const eligible = canAttempt(channel, opts as NotifyOptions);
+    if (!eligible.ok) {
+      await logAttempt(channel, opts.template, "skipped", {
+        userId: opts.userId,
+        priority: opts.priority,
+        error: eligible.reason,
+      });
+      attempts.push({ channel, ok: false, error: eligible.reason });
+      continue;
+    }
+    let r: ChannelResult;
+    if (channel === "email") r = await sendEmail(opts as NotifyOptions);
+    else r = await sendViaMessageService(
+      channel as "inapp" | "whatsapp" | "sms",
+      opts as NotifyOptions,
+    );
+    attempts.push(r);
+    if (r.ok) break; // deterministic stop on first delivered channel
+  }
+  return { ok: attempts.some((a) => a.ok), attempts };
+}
+
+function canAttempt(
+  channel: NotificationChannel,
+  opts: NotifyOptions,
+): { ok: true } | { ok: false; reason: string } {
+  if (channel === "push") return { ok: false, reason: "push_provider_not_configured" };
+  if (channel === "inapp") {
+    if (!opts.userId) return { ok: false, reason: "missing_user_id" };
+    if (!opts.payload?.inapp) return { ok: false, reason: "missing_inapp_template" };
+    return { ok: true };
+  }
+  if (channel === "whatsapp") {
+    if (!opts.to.phone) return { ok: false, reason: "missing_phone" };
+    if (!opts.payload?.whatsapp) return { ok: false, reason: "missing_whatsapp_template" };
+    return { ok: true };
+  }
+  if (channel === "sms") {
+    if (!opts.to.phone) return { ok: false, reason: "missing_phone" };
+    if (!opts.payload?.sms) return { ok: false, reason: "sms_placeholder_not_configured" };
+    return { ok: true };
+  }
+  if (channel === "email") {
+    if (!opts.to.email) return { ok: false, reason: "missing_email" };
+    if (!opts.payload?.email) return { ok: false, reason: "missing_email_template" };
+    return { ok: true };
+  }
+  return { ok: false, reason: "unknown_channel" };
+}
+
 export const NotificationService = {
   notify,
+  notifyWithPriority,
 
   // ---------- Convenience helpers (top 10 transactional flows) ----------
 
