@@ -2407,6 +2407,7 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      ride_dispatch: { Args: { p_ride_id: string }; Returns: string }
       ride_rate: {
         Args: {
           p_comment?: string
