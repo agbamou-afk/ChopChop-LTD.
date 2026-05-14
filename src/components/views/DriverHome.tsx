@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Power, BellRing, Radar, Users, Star, TrendingUp, Timer, AlertTriangle, Clock, ShieldCheck, FileWarning } from "lucide-react";
+import { Power, BellRing, Radar, Users, Star, TrendingUp, Timer, AlertTriangle, Clock, ShieldCheck, FileWarning, Wallet, ChevronRight } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { DriverDashboard } from "@/components/driver/DriverDashboard";
@@ -15,6 +15,7 @@ import { useWallet } from "@/hooks/useWallet";
 import { useDriverProfile } from "@/hooks/useDriverProfile";
 import { useDriverPresence } from "@/hooks/useDriverPresence";
 import { useIncomingOffers, type RideOffer } from "@/hooks/useIncomingOffers";
+import { useDriverEarnings } from "@/hooks/useDriverEarnings";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { formatGNF } from "@/lib/format";
