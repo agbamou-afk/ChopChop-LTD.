@@ -13,6 +13,16 @@ export type NotificationKind =
   | "support"
   | "system";
 
+import { Analytics } from "@/lib/analytics/AnalyticsService";
+
+function track(name: string, metadata: Record<string, unknown>) {
+  try {
+    Analytics.track(name as never, { metadata });
+  } catch {
+    /* analytics must never break the notification path */
+  }
+}
+
 /** Stable UI groups for the notification center. */
 export type NotificationGroup =
   | "wallet"
@@ -105,11 +115,18 @@ export const notifications = {
     write(read().map((n) => ({ ...n, read: true })));
   },
   markRead(id: string) {
-    write(read().map((n) => (n.id === id ? { ...n, read: true } : n)));
+    const list = read();
+    const target = list.find((n) => n.id === id);
+    if (target && !target.read) {
+      track("notification.opened", { kind: target.kind, id });
+    }
+    write(list.map((n) => (n.id === id ? { ...n, read: true } : n)));
   },
   markManyRead(ids: string[]) {
     if (ids.length === 0) return;
     const set = new Set(ids);
+    const before = read().filter((n) => set.has(n.id) && !n.read);
+    for (const n of before) track("notification.opened", { kind: n.kind, id: n.id });
     write(read().map((n) => (set.has(n.id) ? { ...n, read: true } : n)));
   },
   removeMany(ids: string[]) {
@@ -161,6 +178,10 @@ function enqueueOffline(item: QueuedNotification) {
   if (list.some((q) => q.dedupKey === item.dedupKey)) return;
   list.push(item);
   writeQueue(list);
+  track("notification.queued_offline", {
+    kind: item.kind,
+    dedupKey: item.dedupKey,
+  });
 }
 
 function readFlushed(): Set<string> {

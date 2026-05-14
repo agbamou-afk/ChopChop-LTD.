@@ -16,6 +16,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { MessageService } from "@/lib/messaging";
 import type { MessageTemplate } from "@/lib/messaging/types";
+import { Analytics } from "@/lib/analytics/AnalyticsService";
 
 export type NotificationChannel =
   | "email"
@@ -90,6 +91,20 @@ async function logAttempt(
     });
   } catch {
     // never let logging break the send path
+  }
+  // Mirror to analytics for reliability dashboards.
+  if (status === "sent" || status === "failed") {
+    Analytics.track(
+      status === "sent" ? "notification.sent" : "notification.failed",
+      {
+        metadata: {
+          channel,
+          template,
+          priority: opts.priority ?? "normal",
+          error: opts.error,
+        },
+      },
+    );
   }
 }
 
@@ -201,6 +216,7 @@ async function notifyWithPriority(
   opts: Omit<NotifyOptions, "channels" | "fanout">,
 ): Promise<NotifyResult> {
   const attempts: ChannelResult[] = [];
+  let inappFailedFirst = false;
   for (const channel of PRIORITY_ORDER) {
     const eligible = canAttempt(channel, opts as NotifyOptions);
     if ("reason" in eligible) {
@@ -220,6 +236,16 @@ async function notifyWithPriority(
       opts as NotifyOptions,
     );
     attempts.push(r);
+    if (channel === "inapp" && !r.ok) inappFailedFirst = true;
+    if (channel === "whatsapp" && r.ok && inappFailedFirst) {
+      Analytics.track("whatsapp.fallback.used", {
+        metadata: {
+          template: opts.template,
+          priority: opts.priority ?? "normal",
+          reason: "inapp_failed",
+        },
+      });
+    }
     if (r.ok) break; // deterministic stop on first delivered channel
   }
   return { ok: attempts.some((a) => a.ok), attempts };

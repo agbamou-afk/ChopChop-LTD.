@@ -131,6 +131,13 @@ export const EVENTS = {
   "support.opened": "support",
   "support.ticket.created": "support",
 
+  // --- Notifications (delivery reliability) ---
+  "notification.sent": "notification",
+  "notification.failed": "notification",
+  "notification.opened": "notification",
+  "notification.queued_offline": "notification",
+  "whatsapp.fallback.used": "notification",
+
   // --- Risk (always-on, not gated by basic_analytics consent) ---
   "risk.signal.detected": "risk",
 } as const;
@@ -147,6 +154,8 @@ export const ALWAYS_ON_EVENTS = new Set<string>([
   "wallet.pin.failed",
   "wallet.payment.failed",
   "wallet.topup.failed",
+  "notification.failed",
+  "whatsapp.fallback.used",
 ]);
 
 export function categoryFor(name: EventName | string): string {
