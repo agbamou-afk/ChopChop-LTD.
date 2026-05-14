@@ -51,6 +51,7 @@ export function DriverHome({ onToggleDriverMode }: DriverHomeProps) {
   const { available: driverBalance, loading: walletLoading } = useWallet("driver");
   const { offers, refetch: refetchOffers } = useIncomingOffers(isOnline);
   const queue = offers.map(offerToRequest);
+  const e = useDriverEarnings();
 
   useDriverPresence({ enabled: isOnline, onTrip: !!activeTrip });
 
