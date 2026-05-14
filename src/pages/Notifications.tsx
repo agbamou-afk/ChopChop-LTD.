@@ -102,7 +102,7 @@ const NotificationsPage = () => {
   };
 
   return (
-    <AppShell>
+    <AppShell withBottomNav={false}>
       <Seo title="Notifications — CHOP CHOP" description="Vos alertes courses, livraisons, paiements et marché." canonical="/notifications" />
       <PageHeader
         title="Notifications"
