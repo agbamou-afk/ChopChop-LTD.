@@ -10,6 +10,8 @@ import { QrScanner } from "@/components/scanner/QrScanner";
 interface Props {
   rideId: string;
   driverName?: string | null;
+  /** The actual pickup code on the ride; used for the demo bypass shortcut. */
+  pickupCode?: string | null;
 }
 
 /**
@@ -17,7 +19,7 @@ interface Props {
  * and metadata.phase === 'arrived'. Calls ride_confirm_pickup which transitions
  * the ride to in_progress on success.
  */
-export function PickupConfirmCard({ rideId, driverName }: Props) {
+export function PickupConfirmCard({ rideId, driverName, pickupCode }: Props) {
   const [scanning, setScanning] = useState(false);
   const [manualOpen, setManualOpen] = useState(false);
   const [code, setCode] = useState("");
@@ -110,11 +112,11 @@ export function PickupConfirmCard({ rideId, driverName }: Props) {
           </form>
         )}
 
-        {isDemo && (
+        {isDemo && pickupCode && (
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => submit("DEMO_BYPASS")}
+            onClick={() => submit(pickupCode)}
             disabled={busy}
             className="w-full text-muted-foreground hover:text-foreground gap-1.5"
           >
