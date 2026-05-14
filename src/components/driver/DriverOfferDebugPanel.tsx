@@ -53,6 +53,7 @@ export function DriverOfferDebugPanel({ activeTab }: { activeTab: string }) {
   const hasVisibleOffer = isOnline && queue.length > 0 && !activeTrip && !activeRideId;
   const bottomSheetShouldOpen = hasVisibleOffer && activeTab === "orders";
   const globalBannerShouldShow = hasVisibleOffer && activeTab !== "orders";
+  const driverStatus = profile?.status === "suspended" ? "suspended" : profile?.presence ?? "offline";
   const expiresAt = currentExpiresAt ?? latestOffer?.expires_at ?? null;
   const remaining = expiresAt ? Math.max(0, Math.ceil((new Date(expiresAt).getTime() - now) / 1000)) : null;
   const exactBlocker = hasVisibleOffer
@@ -82,7 +83,7 @@ export function DriverOfferDebugPanel({ activeTab }: { activeTab: string }) {
         <DebugRow label="user_id" value={user?.id} />
         <DebugRow label="driver_profile_id" value={profile?.user_id} />
         <DebugRow label="is_demo_driver" value={isDemoDriver} />
-        <DebugRow label="driver status" value={profile?.presence ?? (profile?.status === "suspended" ? "suspended" : "offline")} />
+        <DebugRow label="driver status" value={driverStatus} />
         <DebugRow label="active tab" value={tabLabel[activeTab] ?? activeTab} />
         <DebugRow label="realtime ride_offers" value={realtimeStatus} />
         <DebugRow label="pending offers" value={queue.length} />
