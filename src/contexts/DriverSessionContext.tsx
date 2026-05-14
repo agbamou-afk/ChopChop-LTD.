@@ -41,6 +41,10 @@ interface DriverSessionValue {
   decline: (id: string) => Promise<void>;
   activeTrip: IncomingRequest | null;
   activeRideId: string | null;
+  latestOffer: RideOffer | null;
+  realtimeStatus: string;
+  blockingReason: string;
+  createDebugOfferForCurrentDriver: () => Promise<void>;
 }
 
 const DriverSessionContext = createContext<DriverSessionValue | null>(null);
@@ -59,7 +63,7 @@ export function DriverSessionProvider({ children }: { children: ReactNode }) {
   const [current, setCurrent] = useState<IncomingRequest | null>(null);
   const [activeTrip, setActiveTrip] = useState<IncomingRequest | null>(null);
   const [activeRideId, setActiveRideId] = useState<string | null>(null);
-  const { offers, refetch: refetchOffers } = useIncomingOffers(isOnline);
+  const { offers, latestOffer, realtimeStatus, refetch: refetchOffers } = useIncomingOffers(isOnline);
   const queue = offers.map(offerToRequest);
   const currentExpiresAt = current
     ? offers.find((o) => o.id === current.id)?.expires_at ?? null
@@ -118,6 +122,25 @@ export function DriverSessionProvider({ children }: { children: ReactNode }) {
   }, [user?.id, profile?.presence, activeTrip, activeRideId]);
 
   const cashOverLimit = !!profile && profile.cash_debt_gnf >= profile.debt_limit_gnf;
+  const blockingReason = activeTrip || activeRideId
+    ? "course_active"
+    : !profile
+      ? "profil_chauffeur_introuvable"
+      : profile.status !== "approved"
+        ? `statut_chauffeur_${profile.status}`
+        : !isOnline
+          ? `presence_${profile.presence}`
+          : queue.length === 0
+            ? latestOffer
+              ? latestOffer.status !== "pending"
+                ? `derniere_offre_${latestOffer.status}`
+                : new Date(latestOffer.expires_at).getTime() <= Date.now()
+                  ? "derniere_offre_expiree"
+                  : "aucune_offre_visible"
+              : "aucune_offre"
+            : current
+              ? "visible"
+              : "en_attente_affichage";
 
   const togglePresence = useCallback(async () => {
     if (!profile || toggling) return;
@@ -193,11 +216,31 @@ export function DriverSessionProvider({ children }: { children: ReactNode }) {
 
   const closeTrip = () => { setActiveTrip(null); setActiveRideId(null); };
 
+  const createDebugOfferForCurrentDriver = useCallback(async () => {
+    setActiveTrip(null);
+    setActiveRideId(null);
+    setCurrent(null);
+    const { data, error } = await supabase.rpc("debug_create_offer_for_current_driver" as never);
+    if (error) {
+      toast.error("Création offre debug échouée", { description: error.message });
+      return;
+    }
+    const offerId = (data as { offer_id?: string } | null)?.offer_id;
+    // eslint-disable-next-line no-console
+    console.log("[driver_offer_debug] created offer", offerId, data);
+    toast.success("Offre test créée pour ce chauffeur", {
+      description: offerId ? `Offer ${offerId.slice(0, 8)} • expire dans 60 s` : undefined,
+    });
+    refetch();
+    await refetchOffers();
+  }, [refetch, refetchOffers]);
+
   const value: DriverSessionValue = {
     profile, profileLoading, refetchProfile: refetch,
     isOnline, toggling, togglePresence, cashOverLimit,
     queue, current, currentExpiresAt, showCurrent, accept, decline,
     activeTrip, activeRideId,
+    latestOffer, realtimeStatus, blockingReason, createDebugOfferForCurrentDriver,
   };
 
   // Always prefer the in-app navigation screen (DriverActiveTrip) when we
