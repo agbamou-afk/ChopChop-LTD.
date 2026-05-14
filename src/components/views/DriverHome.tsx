@@ -231,14 +231,6 @@ export function DriverHome({ onToggleDriverMode }: DriverHomeProps) {
             </div>
           </Card>
         )}
-        <LiveStrip
-          stats={[
-            { icon: Users, label: `${queue.length} demandes proches`, bg: "bg-primary/10", tone: "text-primary" },
-            { icon: Timer, label: "Temps moyen 12 min", bg: "bg-secondary/20", tone: "text-foreground" },
-            { icon: Star, label: `Note ${(profile?.rating ?? 0).toFixed(1)}`, bg: "bg-[hsl(45_90%_55%/0.14)]", tone: "text-[hsl(38_85%_40%)]" },
-            { icon: TrendingUp, label: `Acceptation ${Math.round((profile?.accept_rate ?? 0) * 100)}%`, bg: "bg-success/10", tone: "text-success" },
-          ]}
-        />
         {/* Online toggle — 3 states: Hors ligne / En ligne / Recherche */}
         {(() => {
           const searching = isOnline && !current && !activeTrip;
@@ -273,37 +265,86 @@ export function DriverHome({ onToggleDriverMode }: DriverHomeProps) {
           );
         })()}
 
-        <DriverDashboard
-          todayEarnings={e.todayGnf}
-          weeklyEarnings={e.weekGnf}
-          completedRides={e.completedToday}
-          onlineHours={6}
-          acceptRate={profile?.accept_rate ?? 0.94}
-        />
-
-        <LiveRidesPanel />
-
-        {isOnline && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="text-center py-8"
-          >
-            <div className="w-20 h-20 rounded-full bg-muted mx-auto flex items-center justify-center mb-4">
-              <BellRing className="w-10 h-10 text-muted-foreground" />
+        {/* Operational chips: today earnings + nearby demand */}
+        <div className="grid grid-cols-2 gap-3">
+          <Card className="p-3 flex items-center gap-3">
+            <div className="p-2 rounded-xl bg-primary/10">
+              <Wallet className="w-4 h-4 text-primary" />
             </div>
-            <h3 className="text-lg font-semibold text-foreground mb-2">
-              {queue.length > 0 ? `${queue.length} demande(s) en file` : "En attente de courses"}
-            </h3>
-            <p className="text-muted-foreground text-sm mb-4">
-              Les nouvelles demandes apparaîtront ici
-            </p>
-            {queue.length > 0 && (
-              <Button onClick={triggerNext} variant="outline" className="h-11">
-                <BellRing className="w-4 h-4 mr-2" /> Voir la demande suivante
+            <div className="min-w-0">
+              <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Aujourd'hui</p>
+              <p className="text-sm font-bold text-foreground truncate">{formatGNF(e.todayGnf)}</p>
+            </div>
+          </Card>
+          <Card className="p-3 flex items-center gap-3">
+            <div className="p-2 rounded-xl bg-success/10">
+              <Users className="w-4 h-4 text-success" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Demandes</p>
+              <p className="text-sm font-bold text-foreground truncate">
+                {queue.length} {queue.length > 1 ? "proches" : "proche"}
+              </p>
+            </div>
+          </Card>
+        </div>
+
+        {/* Active ride card OR demand heatmap */}
+        {activeTrip ? (
+          <Card className="p-4 border-primary/40 bg-primary/5">
+            <div className="flex items-start gap-3">
+              <div className="p-2 rounded-xl bg-primary/15 mt-0.5">
+                <Navigation className="w-5 h-5 text-primary" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[11px] uppercase tracking-wide text-primary font-semibold">Course en cours</p>
+                <p className="text-sm font-bold text-foreground truncate mt-0.5">
+                  {activeTrip.pickup} → {activeTrip.destination}
+                </p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {formatGNF(activeTrip.estimatedPrice)} · {activeTrip.distance}
+                </p>
+              </div>
+              <Button size="sm" className="gradient-primary" onClick={() => { /* trip overlay opens via state */ }}>
+                Ouvrir
               </Button>
-            )}
-          </motion.div>
+            </div>
+          </Card>
+        ) : (
+          <Card className="overflow-hidden">
+            <div className="px-4 pt-3 pb-2 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <MapPin className="w-4 h-4 text-primary" />
+                <p className="text-sm font-semibold text-foreground">Demande à proximité</p>
+              </div>
+              <span className="text-[11px] text-muted-foreground">Conakry</span>
+            </div>
+            <div className="relative h-44 bg-muted">
+              <ChopMap
+                className="absolute inset-0 w-full h-full"
+                interactive={false}
+                initialView={{ longitude: -13.6773, latitude: 9.6412, zoom: 11.5 }}
+              >
+                <HeatmapLayer
+                  points={[
+                    { lng: -13.6773, lat: 9.6412, weight: 1 },
+                    { lng: -13.6850, lat: 9.5350, weight: 0.85 },
+                    { lng: -13.6500, lat: 9.5800, weight: 0.7 },
+                    { lng: -13.7000, lat: 9.6200, weight: 0.6 },
+                    { lng: -13.6650, lat: 9.6100, weight: 0.5 },
+                    { lng: -13.6300, lat: 9.5500, weight: 0.45 },
+                  ]}
+                />
+              </ChopMap>
+              {!isOnline && (
+                <div className="absolute inset-0 bg-background/70 backdrop-blur-[2px] flex items-center justify-center">
+                  <p className="text-xs text-muted-foreground px-3 text-center">
+                    Passez en ligne pour recevoir des demandes
+                  </p>
+                </div>
+              )}
+            </div>
+          </Card>
         )}
       </div>
 
