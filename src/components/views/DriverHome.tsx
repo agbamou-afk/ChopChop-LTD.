@@ -117,14 +117,6 @@ export function DriverHome({ onToggleDriverMode }: DriverHomeProps) {
     refetchOffers();
   };
 
-  const triggerNext = () => {
-    if (queue.length === 0) {
-      toast.info("Aucune demande en attente");
-      return;
-    }
-    setCurrent(queue[0]);
-  };
-
   // Application/status gating UI
   if (!profileLoading && (!profile || profile.status !== "approved")) {
     const status = profile?.status;
