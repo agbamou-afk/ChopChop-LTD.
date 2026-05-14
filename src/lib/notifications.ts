@@ -9,7 +9,30 @@ export type NotificationKind =
   | "ride"
   | "delivery"
   | "marche"
+  | "order"
+  | "support"
   | "system";
+
+/** Stable UI groups for the notification center. */
+export type NotificationGroup =
+  | "wallet"
+  | "rides"
+  | "orders"
+  | "support"
+  | "marketplace"
+  | "other";
+
+export function groupOfKind(kind: NotificationKind): NotificationGroup {
+  switch (kind) {
+    case "wallet": return "wallet";
+    case "ride": return "rides";
+    case "delivery":
+    case "order": return "orders";
+    case "support": return "support";
+    case "marche": return "marketplace";
+    default: return "other";
+  }
+}
 
 export interface AppNotification {
   id: string;
