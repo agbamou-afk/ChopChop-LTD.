@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { formatGNF } from "@/lib/format";
 import { AnimatePresence } from "framer-motion";
 import { UserHome } from "@/components/views/UserHome";
@@ -59,23 +59,36 @@ const Index = () => {
   const { roles, user } = useAuth();
   const isDriver = roles.includes("driver");
   const navigate = useNavigate();
+  // Rides the user has actively dismissed this session — never re-restore them.
+  const dismissedRidesRef = useRef<Set<string>>(new Set());
+  // Only attempt the auto-restore once per mount; closing the trip should not
+  // immediately re-open the same ride from the DB.
+  const restoreAttemptedRef = useRef(false);
 
   // Restore an in-flight client ride after refresh / reconnect / reopen.
-  // Source of truth is the rides table — never localStorage — so the screen
-  // always matches the real ride state.
+  // Source of truth is the rides table. We only restore RECENT, in-progress
+  // rides — orphan pending rides (no driver assigned, older than 30 min) are
+  // ignored so they never trap the user on the tracking screen.
   useEffect(() => {
-    if (!user || isDriverMode || activeTrip) return;
+    if (!user || isDriverMode || activeTrip || restoreAttemptedRef.current) return;
+    restoreAttemptedRef.current = true;
     let cancelled = false;
     (async () => {
+      const cutoffRecent = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString();
       const { data: ride } = await supabase
         .from("rides")
-        .select("id,mode,pickup_lat,pickup_lng,dest_lat,dest_lng,fare_gnf,hold_tx_id,status")
+        .select("id,mode,pickup_lat,pickup_lng,dest_lat,dest_lng,fare_gnf,hold_tx_id,status,driver_id,created_at")
         .eq("client_id", user.id)
         .in("status", ["pending", "in_progress"])
+        .gte("created_at", cutoffRecent)
         .order("created_at", { ascending: false })
         .limit(1)
         .maybeSingle();
       if (cancelled || !ride) return;
+      // Skip orphan pending rides with no driver assigned for >30 min.
+      const ageMs = Date.now() - new Date(ride.created_at as string).getTime();
+      if (ride.status === "pending" && !ride.driver_id && ageMs > 30 * 60 * 1000) return;
+      if (dismissedRidesRef.current.has(ride.id)) return;
       setActiveTrip({
         mode: ride.mode as TrackingMode,
         pickupCoords: [Number(ride.pickup_lat), Number(ride.pickup_lng)],
@@ -89,6 +102,21 @@ const Index = () => {
     })();
     return () => { cancelled = true; };
   }, [user?.id, isDriverMode, activeTrip]);
+
+  const closeActiveTrip = async (alsoCancel: boolean) => {
+    const trip = activeTrip;
+    if (trip?.rideId) {
+      dismissedRidesRef.current.add(trip.rideId);
+      // If the user closes a still-pending (un-matched) ride, cancel it
+      // server-side so it does not stay around as an orphan.
+      if (alsoCancel) {
+        try { await supabase.rpc("ride_cancel", { p_ride_id: trip.rideId, p_reason: "client_dismissed" } as never); } catch { /* noop */ }
+      }
+    }
+    setActiveTrip(null);
+    setActiveView("orders");
+    setActiveTab("orders");
+  };
 
   const enableDriverMode = () => {
     if (!requireAuth()) return;
@@ -282,11 +310,7 @@ const Index = () => {
               rideId={activeTrip.rideId}
               mode={activeTrip.mode as "moto" | "toktok"}
               holdId={activeTrip.holdId}
-              onClose={() => {
-                setActiveTrip(null);
-                setActiveView("orders");
-                setActiveTab("orders");
-              }}
+              onClose={() => closeActiveTrip(true)}
             />
           )
           : <LiveTracking
@@ -296,11 +320,7 @@ const Index = () => {
             fare={activeTrip.fare}
             holdId={activeTrip.holdId}
             rideId={activeTrip.rideId}
-            onClose={() => {
-              setActiveTrip(null);
-              setActiveView("orders");
-              setActiveTab("orders");
-            }}
+            onClose={() => closeActiveTrip(true)}
           />
         )}
       </AnimatePresence>
