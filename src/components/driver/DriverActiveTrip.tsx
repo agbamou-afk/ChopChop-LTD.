@@ -88,12 +88,12 @@ export function DriverActiveTrip({ rideId, onClose }: Props) {
 
   const phase: Phase = useMemo(() => {
     if (!ride) return "approach";
-    if (ride.status === "in_progress") {
-      const p = (ride.metadata as any)?.phase;
-      return p === "at_destination" ? "at_destination" : "on_trip";
-    }
     const p = (ride.metadata as any)?.phase;
-    return p === "arrived" ? "arrived" : "approach";
+    if (p === "approach" || p === "arrived" || p === "on_trip" || p === "at_destination") {
+      return p as Phase;
+    }
+    // Fallback for legacy rides without a phase tag.
+    return ride.status === "in_progress" ? "on_trip" : "approach";
   }, [ride]);
 
   // Lookup client phone for the call button
