@@ -22,7 +22,7 @@ import { toast } from "@/hooks/use-toast";
 import { formatGNF } from "@/lib/format";
 import { Analytics } from "@/lib/analytics/AnalyticsService";
 import QRCode from "react-qr-code";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
 type Phase = "approach" | "arrived" | "on_trip" | "at_destination";
 
@@ -136,10 +136,10 @@ export function DriverActiveTrip({ rideId, onClose }: Props) {
   useEffect(() => {
     const prev = prevPhaseRef.current;
     prevPhaseRef.current = phase;
-    if (phase === "arrived" && prev !== "arrived" && pickupCode) {
+    if (phase === "arrived" && prev !== "arrived") {
       setQrOpen(true);
     }
-    if (phase !== "arrived") setQrOpen(false);
+    if (phase === "on_trip" || phase === "at_destination") setQrOpen(false);
   }, [phase, pickupCode]);
 
   // Rotate the QR token every 30 seconds while the popup is visible
@@ -168,6 +168,7 @@ export function DriverActiveTrip({ rideId, onClose }: Props) {
     const { error } = await supabase.rpc("ride_set_phase", { p_ride_id: rideId, p_phase: p });
     setBusy(false);
     if (error) { toast({ title: "Erreur", description: error.message }); return false; }
+    if (p === "arrived") setQrOpen(true);
     try { Analytics.track("driver.ride.completed" as any, { metadata: { phase: p, rideId } }); } catch {}
     return true;
   };
@@ -345,17 +346,24 @@ export function DriverActiveTrip({ rideId, onClose }: Props) {
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
             <DialogTitle className="text-center">Faites scanner ce QR au client</DialogTitle>
+            <DialogDescription className="text-center">
+              Le QR se renouvelle toutes les 30 secondes pour la sécurité.
+            </DialogDescription>
           </DialogHeader>
-          {pickupCode && (
+          {pickupCode ? (
             <div className="flex flex-col items-center gap-3 pb-2">
               <div className="bg-white p-4 rounded-2xl">
                 <QRCode value={qrValue} size={240} />
               </div>
               <p className="text-3xl font-bold tracking-[0.3em] tabular-nums">{pickupCode}</p>
               <p className="text-xs text-muted-foreground text-center">
-                Le QR se renouvelle automatiquement toutes les 30 secondes ({secondsLeft}s).
-                Le client peut aussi saisir le code à 6 caractères.
+                Renouvellement dans {secondsLeft}s · le client peut aussi saisir le code à 6 caractères.
               </p>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center gap-3 py-8">
+              <Loader2 className="w-8 h-8 animate-spin text-primary" />
+              <p className="text-sm text-muted-foreground">Génération du code de prise en charge…</p>
             </div>
           )}
         </DialogContent>
