@@ -1,0 +1,127 @@
+import { useState } from "react";
+import { motion } from "framer-motion";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { ScanLine, KeyRound, Loader2, ShieldCheck } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
+import { QrScanner } from "@/components/scanner/QrScanner";
+
+interface Props {
+  rideId: string;
+  driverName?: string | null;
+}
+
+/**
+ * Pickup confirmation handshake. Shown to the client when ride.status === 'pending'
+ * and metadata.phase === 'arrived'. Calls ride_confirm_pickup which transitions
+ * the ride to in_progress on success.
+ */
+export function PickupConfirmCard({ rideId, driverName }: Props) {
+  const [scanning, setScanning] = useState(false);
+  const [manualOpen, setManualOpen] = useState(false);
+  const [code, setCode] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  const isDemo =
+    import.meta.env.DEV ||
+    (typeof window !== "undefined" && /[?&]demo=1/.test(window.location.search));
+
+  const submit = async (raw: string) => {
+    const value = raw.trim();
+    if (!value) return;
+    setBusy(true);
+    const { error } = await supabase.rpc("ride_confirm_pickup", {
+      p_ride_id: rideId,
+      p_code: value,
+    });
+    setBusy(false);
+    if (error) {
+      toast({ title: "Code invalide", description: error.message });
+      return;
+    }
+    setScanning(false);
+    setManualOpen(false);
+    setCode("");
+    toast({ title: "Course démarrée", description: "Bon voyage !" });
+  };
+
+  return (
+    <>
+      {scanning && (
+        <QrScanner
+          title="Confirmer la prise en charge"
+          subtitle="Scannez le QR affiché par le chauffeur"
+          onClose={() => setScanning(false)}
+          onResult={(t) => submit(t)}
+        />
+      )}
+      <motion.div
+        initial={{ y: 20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        className="absolute left-3 right-3 bottom-3 z-20 rounded-2xl border border-border bg-card/95 backdrop-blur-md p-4 shadow-elevated space-y-3"
+      >
+        <div>
+          <p className="text-[10px] uppercase tracking-wide text-primary font-semibold">
+            Chauffeur arrivé
+          </p>
+          <p className="text-base font-semibold">
+            {driverName ? `${driverName} vous attend` : "Votre chauffeur vous attend"}
+          </p>
+          <p className="text-xs text-muted-foreground">
+            Confirmez la prise en charge pour démarrer la course.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 gap-2">
+          <Button
+            onClick={() => setScanning(true)}
+            disabled={busy}
+            className="w-full h-11 gradient-primary"
+          >
+            <ScanLine className="w-4 h-4 mr-2" /> Scanner le QR du chauffeur
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => setManualOpen((v) => !v)}
+            disabled={busy}
+            className="w-full h-10"
+          >
+            <KeyRound className="w-4 h-4 mr-2" /> Saisir le code manuellement
+          </Button>
+        </div>
+
+        {manualOpen && (
+          <form
+            onSubmit={(e) => { e.preventDefault(); submit(code); }}
+            className="flex gap-2"
+          >
+            <Input
+              value={code}
+              onChange={(e) => setCode(e.target.value.toUpperCase())}
+              placeholder="ABC123"
+              maxLength={20}
+              autoFocus
+              className="tracking-[0.25em] font-mono text-center"
+            />
+            <Button type="submit" disabled={busy || code.length < 4}>
+              {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : "Valider"}
+            </Button>
+          </form>
+        )}
+
+        {isDemo && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => submit("DEMO_BYPASS")}
+            disabled={busy}
+            className="w-full text-muted-foreground hover:text-foreground gap-1.5"
+          >
+            <ShieldCheck className="h-3.5 w-3.5" /> Bypass démo (test uniquement)
+          </Button>
+        )}
+      </motion.div>
+    </>
+  );
+}
