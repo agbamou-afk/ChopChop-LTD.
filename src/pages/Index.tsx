@@ -63,6 +63,13 @@ const Index = () => {
   const { roles, user } = useAuth();
   const isDriver = roles.includes("driver");
   const navigate = useNavigate();
+  // Linked demo mode: demo client account OR explicit ?demo=linked flag.
+  const isLinkedDemo = (() => {
+    const email = (user?.email ?? "").toLowerCase();
+    if (email === "demo.client@chopchop.gn") return true;
+    if (typeof window !== "undefined" && /[?&]demo=linked\b/.test(window.location.search)) return true;
+    return false;
+  })();
   // One-shot guard: only auto-enter driver mode the first time we see this
   // signed-in demo driver. After that, manual toggles win.
   const autoModeAppliedRef = useRef(false);
@@ -349,7 +356,8 @@ const Index = () => {
           (typeof window !== "undefined" &&
             (localStorage.getItem("cc_realtime_trip") === "1" ||
               /[?&]trip=v2/.test(window.location.search) ||
-              /[?&]demo=1/.test(window.location.search))) && activeTrip.rideId
+              /[?&]demo=1/.test(window.location.search) ||
+              isLinkedDemo)) && activeTrip.rideId
           ? (
             <RealtimeTripScreen
               key={`v2-${activeTrip.rideId}`}
