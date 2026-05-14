@@ -38,11 +38,17 @@ export function useRideRealtime(rideId: string | null) {
       return;
     }
     let alive = true;
-    // Stale-while-revalidate: only flip into a "loading" state when we have
-    // nothing to show yet. Switching between rides (or refetching after a
-    // reconnect) keeps the previous ride visible to avoid skeleton flashes.
-    setRide((prev) => (prev && prev.id === rideId ? prev : prev));
-    setLoading((prevLoading) => (ride && ride.id === rideId ? false : true));
+    // Stale-while-revalidate: keep the previous ride visible while we refetch.
+    // Only flip to "loading" when we have nothing to show yet, which avoids
+    // skeleton flashes between phase transitions and reconnects.
+    setRide((prev) => {
+      if (prev && prev.id === rideId) {
+        setLoading(false);
+      } else {
+        setLoading(true);
+      }
+      return prev;
+    });
 
     fetchRide().finally(() => {
       if (alive) setLoading(false);
