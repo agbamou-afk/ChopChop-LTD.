@@ -15,12 +15,13 @@ import { DriverTripReceipt } from "./DriverTripReceipt";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
-  Phone, Navigation, CheckCircle2, AlertTriangle, X, Loader2, MapPin, Flag,
+  Phone, Navigation, CheckCircle2, AlertTriangle, X, Loader2, MapPin, Flag, QrCode,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { formatGNF } from "@/lib/format";
 import { Analytics } from "@/lib/analytics/AnalyticsService";
+import QRCode from "react-qr-code";
 
 type Phase = "approach" | "arrived" | "on_trip" | "at_destination";
 
@@ -54,6 +55,11 @@ export function DriverActiveTrip({ rideId, onClose }: Props) {
   const [receiptFare, setReceiptFare] = useState<number>(0);
   const [muted, setMuted] = useState(false);
   const { position: driverPos, request: requestGeo, isReady: geoReady } = useGeolocation({ watch: true });
+
+  const isDemo =
+    import.meta.env.DEV ||
+    (typeof window !== "undefined" && /[?&]demo=1/.test(window.location.search));
+  const pickupCode = (ride?.metadata as any)?.pickup_code as string | undefined;
 
   useEffect(() => { if (!geoReady) requestGeo(); }, [geoReady, requestGeo]);
 
@@ -156,10 +162,17 @@ export function DriverActiveTrip({ rideId, onClose }: Props) {
 
   const primary = (() => {
     if (phase === "approach") return { label: "Je suis arrivé", icon: MapPin, action: () => setPhaseRpc("arrived") };
-    if (phase === "arrived") return { label: "Démarrer la course", icon: Navigation, action: startTrip };
+    if (phase === "arrived") {
+      // Real flow: client confirms pickup via QR/code. Driver waits.
+      // Demo mode keeps a manual bypass so testing can continue end-to-end.
+      if (isDemo) {
+        return { label: "Commencer la course (démo)", icon: Navigation, action: startTrip };
+      }
+      return { label: "En attente de confirmation client…", icon: Loader2, action: async () => {}, disabled: true as boolean };
+    }
     if (phase === "on_trip") return { label: "Arrivé à destination", icon: Flag, action: () => setPhaseRpc("at_destination") };
     return { label: "Terminer & encaisser", icon: CheckCircle2, action: completeTrip };
-  })();
+  })() as { label: string; icon: any; action: () => void | Promise<any>; disabled?: boolean };
   const PrimaryIcon = primary.icon;
 
   return (
@@ -211,6 +224,20 @@ export function DriverActiveTrip({ rideId, onClose }: Props) {
       </div>
 
       <div className="rounded-t-3xl border-t border-border bg-card p-4 space-y-3 shadow-lg">
+        {phase === "arrived" && pickupCode && (
+          <div className="rounded-2xl border border-border bg-muted/30 p-3 flex items-center gap-3">
+            <div className="bg-white p-2 rounded-lg shrink-0">
+              <QRCode value={`CHOP-PICKUP-${pickupCode}`} size={72} />
+            </div>
+            <div className="min-w-0">
+              <p className="text-[10px] uppercase tracking-wide text-muted-foreground flex items-center gap-1">
+                <QrCode className="h-3 w-3" /> Code de prise en charge
+              </p>
+              <p className="text-2xl font-bold tracking-[0.2em] tabular-nums">{pickupCode}</p>
+              <p className="text-[11px] text-muted-foreground">Faites scanner ce QR ou dictez le code au client.</p>
+            </div>
+          </div>
+        )}
         <div className="flex items-center gap-3">
           <div className="flex-1 min-w-0">
             <p className="text-[10px] uppercase tracking-wide text-muted-foreground">
@@ -234,7 +261,7 @@ export function DriverActiveTrip({ rideId, onClose }: Props) {
           )}
         </div>
 
-        <Button onClick={primary.action} disabled={busy}
+        <Button onClick={primary.action} disabled={busy || primary.disabled}
           className="w-full h-14 text-base font-semibold gradient-primary">
           {busy ? <Loader2 className="w-5 h-5 mr-2 animate-spin" /> : <PrimaryIcon className="w-5 h-5 mr-2" />}
           {primary.label}
