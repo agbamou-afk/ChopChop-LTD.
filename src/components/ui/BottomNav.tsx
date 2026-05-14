@@ -1,4 +1,4 @@
-import { Home, ShoppingBag, User, Car, ScanLine } from "lucide-react";
+import { Home, ShoppingBag, Wallet, User, Car, ScanLine } from "lucide-react";
 import { motion } from "framer-motion";
 
 interface BottomNavProps {
