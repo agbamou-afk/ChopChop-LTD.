@@ -2408,6 +2408,7 @@ export type Database = {
         }
       }
       ride_dispatch: { Args: { p_ride_id: string }; Returns: string }
+      ride_integrity_check: { Args: { p_ride_id: string }; Returns: Json }
       ride_rate: {
         Args: {
           p_comment?: string
