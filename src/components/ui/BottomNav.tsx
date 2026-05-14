@@ -1,5 +1,6 @@
-import { Home, ShoppingBag, Wallet, User, Car, ScanLine } from "lucide-react";
+import { Home, ShoppingBag, Wallet, User, ScanLine } from "lucide-react";
 import { motion } from "framer-motion";
+import { SteeringWheel } from "@/components/icons/SteeringWheel";
 
 interface BottomNavProps {
   activeTab: string;
@@ -17,7 +18,7 @@ const userTabs = [
 
 const driverTabs = [
   { id: "home", icon: Home, label: "Tableau" },
-  { id: "orders", icon: Car, label: "Courses" },
+  { id: "orders", icon: SteeringWheel, label: "Courses" },
   { id: "profile", icon: User, label: "Profil" },
 ];
 
