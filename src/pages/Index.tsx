@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { formatGNF } from "@/lib/format";
 import { AnimatePresence } from "framer-motion";
 import { UserHome } from "@/components/views/UserHome";
@@ -56,9 +56,39 @@ const Index = () => {
   } | null>(null);
   const [showScanner, setShowScanner] = useState(false);
   const { requireAuth } = useAuthGuard();
-  const { roles } = useAuth();
+  const { roles, user } = useAuth();
   const isDriver = roles.includes("driver");
   const navigate = useNavigate();
+
+  // Restore an in-flight client ride after refresh / reconnect / reopen.
+  // Source of truth is the rides table — never localStorage — so the screen
+  // always matches the real ride state.
+  useEffect(() => {
+    if (!user || isDriverMode || activeTrip) return;
+    let cancelled = false;
+    (async () => {
+      const { data: ride } = await supabase
+        .from("rides")
+        .select("id,mode,pickup_lat,pickup_lng,dest_lat,dest_lng,fare_gnf,hold_tx_id,status")
+        .eq("client_id", user.id)
+        .in("status", ["pending", "in_progress"])
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (cancelled || !ride) return;
+      setActiveTrip({
+        mode: ride.mode as TrackingMode,
+        pickupCoords: [Number(ride.pickup_lat), Number(ride.pickup_lng)],
+        destCoords: ride.dest_lat != null && ride.dest_lng != null
+          ? [Number(ride.dest_lat), Number(ride.dest_lng)]
+          : undefined,
+        fare: Number(ride.fare_gnf ?? 0),
+        holdId: ride.hold_tx_id ?? null,
+        rideId: ride.id,
+      });
+    })();
+    return () => { cancelled = true; };
+  }, [user?.id, isDriverMode, activeTrip]);
 
   const enableDriverMode = () => {
     if (!requireAuth()) return;
