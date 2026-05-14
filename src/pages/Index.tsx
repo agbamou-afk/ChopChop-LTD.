@@ -23,9 +23,21 @@ import { useAuth } from "@/contexts/AuthContext";
 import { notifications as notif } from "@/lib/notifications";
 import { useNavigate } from "react-router-dom";
 import { DriverSessionProvider } from "@/contexts/DriverSessionContext";
+import { DriverRideAlertBanner } from "@/components/driver/DriverRideAlertBanner";
+import { useDriverSession } from "@/contexts/DriverSessionContext";
 
 export type RideType = "moto" | "toktok" | null;
 export type ActiveView = "home" | "food" | "market" | "wallet" | "profile" | "orders";
+
+/**
+ * Renders the global driver ride-alert banner. Lives inside the provider so it
+ * can read the current offer and surface it from any tab.
+ */
+function DriverGlobalAlert({ activeTab, onView }: { activeTab: string; onView: () => void }) {
+  const { current } = useDriverSession();
+  if (!current) return null;
+  return <DriverRideAlertBanner activeTab={activeTab} onView={onView} />;
+}
 
 const Index = () => {
   const [isDriverMode, setIsDriverMode] = useState(false);
@@ -266,6 +278,13 @@ const Index = () => {
         isDriverMode ? (
           <DriverSessionProvider>
             {renderDriverView()}
+            <DriverGlobalAlert
+              activeTab={activeTab}
+              onView={() => {
+                setActiveTab("orders");
+                setActiveView("orders");
+              }}
+            />
             <BottomNav
               activeTab={activeTab}
               onTabChange={handleTabChange}

@@ -3,7 +3,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/co
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { FlaskConical, LogIn, Wallet, Car, Bell, Trash2, RefreshCw, User, ShieldCheck } from "lucide-react";
+import { FlaskConical, LogIn, Wallet, Car, Bell, Trash2, RefreshCw, User, ShieldCheck, Send } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { chopToast } from "@/lib/toast";
 import { notifications } from "@/lib/notifications";
@@ -140,6 +140,19 @@ export function DemoTestPanel() {
           description: failed.length ? failed.join(", ") : "Voir console pour le rapport.",
         });
       }
+    });
+
+  const sendTestOfferToDemoDriver = () =>
+    run("test-offer", async () => {
+      const { data, error } = await supabase.rpc("demo_seed_ride_offer" as never);
+      if (error) {
+        chopToast.error("Envoi demande test échoué", { description: error.message });
+        return;
+      }
+      const id = (data as { offer_id?: string } | null)?.offer_id;
+      chopToast.success("Demande test envoyée au chauffeur démo", {
+        description: id ? `Offer ${id.slice(0, 8)} • expire dans 20 s` : undefined,
+      });
     });
 
   // Hide entirely if not eligible (extra defence — App.tsx already gates).
@@ -289,6 +302,25 @@ export function DemoTestPanel() {
             </Button>
             <p className="text-[11px] text-muted-foreground mt-1.5">
               Contrôle débit client, crédit chauffeur, commission, ledger, audit & double capture.
+            </p>
+          </div>
+
+          <div>
+            <h4 className="text-xs uppercase tracking-wide text-muted-foreground mb-2">
+              Flux courses
+            </h4>
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={!!busy || !user}
+              onClick={sendTestOfferToDemoDriver}
+              className="w-full justify-start gap-2"
+            >
+              <Send className="w-4 h-4" />
+              {busy === "test-offer" ? "Envoi…" : "Envoyer une demande test au chauffeur démo"}
+            </Button>
+            <p className="text-[11px] text-muted-foreground mt-1.5">
+              Crée une offre pending de 20 s ciblée sur demo.driver — déclenche le banner global et le bottom sheet.
             </p>
           </div>
 

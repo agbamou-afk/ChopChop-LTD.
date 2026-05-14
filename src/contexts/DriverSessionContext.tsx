@@ -34,6 +34,7 @@ interface DriverSessionValue {
   cashOverLimit: boolean;
   queue: IncomingRequest[];
   current: IncomingRequest | null;
+  currentExpiresAt: string | null;
   showCurrent: () => void;
   accept: (id: string) => Promise<void>;
   decline: (id: string) => Promise<void>;
@@ -58,6 +59,9 @@ export function DriverSessionProvider({ children }: { children: ReactNode }) {
   const [activeRideId, setActiveRideId] = useState<string | null>(null);
   const { offers, refetch: refetchOffers } = useIncomingOffers(isOnline);
   const queue = offers.map(offerToRequest);
+  const currentExpiresAt = current
+    ? offers.find((o) => o.id === current.id)?.expires_at ?? null
+    : null;
 
   useDriverPresence({ enabled: isOnline, onTrip: !!activeTrip });
 
@@ -95,6 +99,13 @@ export function DriverSessionProvider({ children }: { children: ReactNode }) {
     if (!isOnline || current || activeTrip || queue.length === 0) return;
     setCurrent(queue[0]);
   }, [isOnline, current, activeTrip, queue]);
+
+  // Drop the current offer if it expired or was cancelled server-side.
+  useEffect(() => {
+    if (!current) return;
+    const stillThere = offers.some((o) => o.id === current.id);
+    if (!stillThere) setCurrent(null);
+  }, [offers, current?.id]);
 
   const accept = useCallback(async (id: string) => {
     const accepted = current;
@@ -137,7 +148,7 @@ export function DriverSessionProvider({ children }: { children: ReactNode }) {
   const value: DriverSessionValue = {
     profile, profileLoading, refetchProfile: refetch,
     isOnline, toggling, togglePresence, cashOverLimit,
-    queue, current, showCurrent, accept, decline,
+    queue, current, currentExpiresAt, showCurrent, accept, decline,
     activeTrip, activeRideId,
   };
 
