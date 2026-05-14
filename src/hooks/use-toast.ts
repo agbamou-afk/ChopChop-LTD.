@@ -1,186 +1,73 @@
+/**
+ * Compatibility shim.
+ *
+ * The legacy Radix-based toast system has been retired in favor of Sonner
+ * (see src/lib/toast.ts and src/components/ui/sonner.tsx). To avoid a
+ * mass-refactor of every call site we keep the same `toast({ title,
+ * description, variant })` signature and route everything through the
+ * unified `chopToast` helper so we get one consistent toast stack.
+ */
 import * as React from "react";
+import { chopToast } from "@/lib/toast";
 
-import type { ToastActionElement, ToastProps } from "@/components/ui/toast";
+type Variant = "default" | "destructive" | "success" | "warning" | "info";
 
-const TOAST_LIMIT = 1;
-const TOAST_REMOVE_DELAY = 1000000;
-
-type ToasterToast = ToastProps & {
-  id: string;
+type LegacyToastInput = {
   title?: React.ReactNode;
   description?: React.ReactNode;
-  action?: ToastActionElement;
+  variant?: Variant;
+  action?: React.ReactNode;
+  duration?: number;
 };
 
-const actionTypes = {
-  ADD_TOAST: "ADD_TOAST",
-  UPDATE_TOAST: "UPDATE_TOAST",
-  DISMISS_TOAST: "DISMISS_TOAST",
-  REMOVE_TOAST: "REMOVE_TOAST",
-} as const;
-
-let count = 0;
-
-function genId() {
-  count = (count + 1) % Number.MAX_SAFE_INTEGER;
-  return count.toString();
+function nodeToString(n: React.ReactNode): string {
+  if (n == null || n === false) return "";
+  if (typeof n === "string" || typeof n === "number") return String(n);
+  if (Array.isArray(n)) return n.map(nodeToString).join("");
+  // Fallback: ignore React elements – titles/descriptions are strings in practice.
+  return "";
 }
 
-type ActionType = typeof actionTypes;
+export function toast(input: LegacyToastInput = {}) {
+  const title = nodeToString(input.title) || nodeToString(input.description) || "";
+  const description = input.title ? nodeToString(input.description) || undefined : undefined;
+  const opts = { description, duration: input.duration } as const;
 
-type Action =
-  | {
-      type: ActionType["ADD_TOAST"];
-      toast: ToasterToast;
-    }
-  | {
-      type: ActionType["UPDATE_TOAST"];
-      toast: Partial<ToasterToast>;
-    }
-  | {
-      type: ActionType["DISMISS_TOAST"];
-      toastId?: ToasterToast["id"];
-    }
-  | {
-      type: ActionType["REMOVE_TOAST"];
-      toastId?: ToasterToast["id"];
-    };
-
-interface State {
-  toasts: ToasterToast[];
-}
-
-const toastTimeouts = new Map<string, ReturnType<typeof setTimeout>>();
-
-const addToRemoveQueue = (toastId: string) => {
-  if (toastTimeouts.has(toastId)) {
-    return;
+  let id: string | number;
+  switch (input.variant) {
+    case "destructive":
+      id = chopToast.error(title, opts);
+      break;
+    case "success":
+      id = chopToast.success(title, opts);
+      break;
+    case "warning":
+      id = chopToast.warning(title, opts);
+      break;
+    case "info":
+      id = chopToast.info(title, opts);
+      break;
+    default:
+      id = chopToast.message(title, opts);
   }
 
-  const timeout = setTimeout(() => {
-    toastTimeouts.delete(toastId);
-    dispatch({
-      type: "REMOVE_TOAST",
-      toastId: toastId,
-    });
-  }, TOAST_REMOVE_DELAY);
-
-  toastTimeouts.set(toastId, timeout);
-};
-
-export const reducer = (state: State, action: Action): State => {
-  switch (action.type) {
-    case "ADD_TOAST":
-      return {
-        ...state,
-        toasts: [action.toast, ...state.toasts].slice(0, TOAST_LIMIT),
-      };
-
-    case "UPDATE_TOAST":
-      return {
-        ...state,
-        toasts: state.toasts.map((t) => (t.id === action.toast.id ? { ...t, ...action.toast } : t)),
-      };
-
-    case "DISMISS_TOAST": {
-      const { toastId } = action;
-
-      // ! Side effects ! - This could be extracted into a dismissToast() action,
-      // but I'll keep it here for simplicity
-      if (toastId) {
-        addToRemoveQueue(toastId);
-      } else {
-        state.toasts.forEach((toast) => {
-          addToRemoveQueue(toast.id);
-        });
-      }
-
-      return {
-        ...state,
-        toasts: state.toasts.map((t) =>
-          t.id === toastId || toastId === undefined
-            ? {
-                ...t,
-                open: false,
-              }
-            : t,
-        ),
-      };
-    }
-    case "REMOVE_TOAST":
-      if (action.toastId === undefined) {
-        return {
-          ...state,
-          toasts: [],
-        };
-      }
-      return {
-        ...state,
-        toasts: state.toasts.filter((t) => t.id !== action.toastId),
-      };
-  }
-};
-
-const listeners: Array<(state: State) => void> = [];
-
-let memoryState: State = { toasts: [] };
-
-function dispatch(action: Action) {
-  memoryState = reducer(memoryState, action);
-  listeners.forEach((listener) => {
-    listener(memoryState);
-  });
-}
-
-type Toast = Omit<ToasterToast, "id">;
-
-function toast({ ...props }: Toast) {
-  const id = genId();
-
-  const update = (props: ToasterToast) =>
-    dispatch({
-      type: "UPDATE_TOAST",
-      toast: { ...props, id },
-    });
-  const dismiss = () => dispatch({ type: "DISMISS_TOAST", toastId: id });
-
-  dispatch({
-    type: "ADD_TOAST",
-    toast: {
-      ...props,
-      id,
-      open: true,
-      onOpenChange: (open) => {
-        if (!open) dismiss();
-      },
+  return {
+    id: String(id),
+    dismiss: () => chopToast.dismiss(id),
+    update: (_next: LegacyToastInput) => {
+      // Sonner doesn't expose a stable update API for this shim; no-op.
     },
-  });
-
-  return {
-    id: id,
-    dismiss,
-    update,
   };
 }
 
-function useToast() {
-  const [state, setState] = React.useState<State>(memoryState);
-
-  React.useEffect(() => {
-    listeners.push(setState);
-    return () => {
-      const index = listeners.indexOf(setState);
-      if (index > -1) {
-        listeners.splice(index, 1);
-      }
-    };
-  }, [state]);
-
+/**
+ * Legacy hook kept for source-compat. The Radix viewport is gone, so the
+ * `toasts` array is always empty – Sonner renders the actual UI.
+ */
+export function useToast() {
   return {
-    ...state,
+    toasts: [] as Array<{ id: string }>,
     toast,
-    dismiss: (toastId?: string) => dispatch({ type: "DISMISS_TOAST", toastId }),
+    dismiss: (toastId?: string | number) => chopToast.dismiss(toastId),
   };
 }
-
-export { useToast, toast };
