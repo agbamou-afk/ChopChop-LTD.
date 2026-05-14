@@ -248,28 +248,6 @@ export function DriverHome({ onToggleDriverMode }: DriverHomeProps) {
         )}
       </div>
 
-      <IncomingRequestPopup
-        request={current}
-        onAccept={handleAccept}
-        onDecline={handleDecline}
-        timeoutSec={20}
-      />
-
-      {activeTrip && (
-        activeRideId &&
-        (typeof window !== "undefined" &&
-          (localStorage.getItem("cc_realtime_trip") === "1" ||
-            /[?&]trip=v2/.test(window.location.search)))
-          ? (
-            <DriverActiveTrip
-              rideId={activeRideId}
-              onClose={() => { setActiveTrip(null); setActiveRideId(null); }}
-            />
-          )
-          : (
-            <DriverTripView request={activeTrip} onClose={() => { setActiveTrip(null); setActiveRideId(null); }} />
-          )
-      )}
     </div>
   );
 }
