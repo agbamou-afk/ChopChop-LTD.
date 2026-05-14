@@ -231,6 +231,7 @@ export function DriverSessionProvider({ children }: { children: ReactNode }) {
     toast.success("Offre test créée pour ce chauffeur", {
       description: offerId ? `Offer ${offerId.slice(0, 8)} • expire dans 60 s` : undefined,
     });
+    setIsOnline(true);
     refetch();
     await refetchOffers();
   }, [refetch, refetchOffers]);
