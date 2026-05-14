@@ -2,7 +2,6 @@ import { useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { notifyWalletEvent } from "@/lib/notifications/walletNotifier";
-import { formatGNF } from "@/lib/format";
 
 /**
  * Subscribes the authenticated user to realtime status changes on their
@@ -70,7 +69,6 @@ export function useTopupNotifications() {
                 id: `topup:${id}:cancelled`,
               });
             }
-            void formatGNF; // keep import used
           },
         )
         .subscribe();
