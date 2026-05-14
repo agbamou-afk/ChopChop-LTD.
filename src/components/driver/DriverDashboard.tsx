@@ -15,6 +15,7 @@ export function DriverDashboard({
   weeklyEarnings,
   completedRides,
   onlineHours,
+  acceptRate = 0.94,
 }: DriverDashboardProps) {
   const formatMoney = (amount: number) =>
     formatGNF(amount);
@@ -106,7 +107,7 @@ export function DriverDashboard({
             </div>
             <span className="text-xs text-muted-foreground">Taux acceptation</span>
           </div>
-          <p className="text-lg font-bold text-foreground">94%</p>
+          <p className="text-lg font-bold text-foreground">{Math.round(acceptRate * 100)}%</p>
         </motion.div>
       </div>
     </div>
