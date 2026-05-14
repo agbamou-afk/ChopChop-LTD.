@@ -42,57 +42,30 @@ export function DriverOrdersView() {
         </div>
       )}
 
-      {activeOrder ? (
+      {activeTrip ? (
         <div className="px-4 pb-28">
-          {/* Active order card */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-card rounded-2xl shadow-elevated overflow-hidden"
+            className="bg-card rounded-2xl shadow-elevated overflow-hidden border border-primary/30"
           >
-            {/* Status banner */}
-            <div className={`${activeOrder.status === "arrived" ? "bg-success" : "gradient-wallet"} px-4 py-3`}>
+            <div className="gradient-wallet px-4 py-3">
               <div className="flex items-center justify-between text-primary-foreground">
-                <span className="font-bold">{statusInfo[activeOrder.status].label}</span>
-                <span className="text-xs opacity-80">{activeOrder.id}</span>
+                <span className="font-bold">Course active</span>
+                <span className="text-xs opacity-80">Navigation ouverte</span>
               </div>
             </div>
 
-            <div className="p-4">
-              {/* Customer info */}
-              <div className="flex items-center justify-between mb-4 pb-4 border-b border-border">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center text-lg font-bold text-foreground">
-                    {activeOrder.customerName.split(" ").map(n => n[0]).join("")}
-                  </div>
-                  <div>
-                    <p className="font-semibold text-foreground">{activeOrder.customerName}</p>
-                    <p className="text-sm text-muted-foreground">{activeOrder.customerPhone}</p>
-                  </div>
-                </div>
-                <div className="flex gap-2">
-                  <button className="p-2 rounded-full bg-primary/10 hover:bg-primary/20 transition-colors">
-                    <Phone className="w-5 h-5 text-primary" />
-                  </button>
-                  <button className="p-2 rounded-full bg-primary/10 hover:bg-primary/20 transition-colors">
-                    <MessageCircle className="w-5 h-5 text-primary" />
-                  </button>
-                </div>
-              </div>
-
-              {/* Route */}
-              <div className="space-y-4 mb-4">
+            <div className="p-4 space-y-4">
+              <div className="space-y-4">
                 <div className="flex items-start gap-3">
                   <div className="mt-1">
                     <div className="w-3 h-3 rounded-full bg-primary" />
                   </div>
                   <div className="flex-1">
                     <p className="text-xs text-muted-foreground">Point de départ</p>
-                    <p className="font-medium text-foreground">{activeOrder.pickup}</p>
+                    <p className="font-medium text-foreground">{activeTrip.pickup}</p>
                   </div>
-                  <button className="p-2 rounded-lg bg-muted hover:bg-muted/80 transition-colors">
-                    <Navigation className="w-4 h-4 text-muted-foreground" />
-                  </button>
                 </div>
                 <div className="flex items-start gap-3">
                   <div className="mt-1">
@@ -100,30 +73,17 @@ export function DriverOrdersView() {
                   </div>
                   <div className="flex-1">
                     <p className="text-xs text-muted-foreground">Destination</p>
-                    <p className="font-medium text-foreground">{activeOrder.destination}</p>
+                    <p className="font-medium text-foreground">{activeTrip.destination}</p>
                   </div>
-                  <button className="p-2 rounded-lg bg-muted hover:bg-muted/80 transition-colors">
-                    <Navigation className="w-4 h-4 text-muted-foreground" />
-                  </button>
                 </div>
               </div>
 
-              {/* Price */}
               <div className="flex items-center justify-between py-3 px-4 bg-muted rounded-xl mb-4">
                 <span className="text-muted-foreground">Montant estimé</span>
                 <span className="text-xl font-bold text-foreground">
-                  {formatMoney(activeOrder.estimatedPrice)}
+                  {formatGNF(activeTrip.estimatedPrice)}
                 </span>
               </div>
-
-              {/* Action button */}
-              <Button
-                onClick={handleStatusUpdate}
-                className="w-full h-14 text-base font-bold gradient-wallet text-primary-foreground ring-glow-primary hover:opacity-95"
-              >
-                <CheckCircle className="w-5 h-5 mr-2" />
-                {statusInfo[activeOrder.status].action}
-              </Button>
             </div>
           </motion.div>
         </div>
