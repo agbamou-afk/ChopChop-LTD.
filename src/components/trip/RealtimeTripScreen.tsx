@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { X } from "lucide-react";
 import { ActiveTripMap } from "./ActiveTripMap";
 import { ClientTripReceipt } from "./ClientTripReceipt";
+import { PickupConfirmCard } from "./PickupConfirmCard";
 import { useRideRealtime } from "@/hooks/useRideRealtime";
 import { useRideLifecycleNotifications } from "@/hooks/useRideLifecycleNotifications";
 import { supabase } from "@/integrations/supabase/client";
@@ -33,6 +34,11 @@ export function RealtimeTripScreen({ rideId, mode, holdId, onClose }: Props) {
   useRideLifecycleNotifications(ride, "client");
   const [driverName, setDriverName] = useState<string | null>(null);
   const [showReceipt, setShowReceipt] = useState(false);
+
+  const meta = (ride?.metadata ?? {}) as Record<string, unknown>;
+  const showPickupConfirm =
+    !!ride && ride.status === "pending" && meta.phase === "arrived" && !!ride.driver_id;
+  const pickupCode = (meta.pickup_code as string | undefined) ?? null;
 
   useEffect(() => {
     if (ride?.status === "completed") setShowReceipt(true);
@@ -102,12 +108,21 @@ export function RealtimeTripScreen({ rideId, mode, holdId, onClose }: Props) {
       </div>
 
       <div className="flex-1 min-h-0">
-        <ActiveTripMap
-          rideId={rideId}
-          onCallDriver={handleCallDriver}
-          onCancel={handleCancel}
-          onClose={onClose}
-        />
+        <div className="relative h-full">
+          <ActiveTripMap
+            rideId={rideId}
+            onCallDriver={handleCallDriver}
+            onCancel={handleCancel}
+            onClose={onClose}
+          />
+          {showPickupConfirm && (
+            <PickupConfirmCard
+              rideId={rideId}
+              driverName={driverName}
+              pickupCode={pickupCode}
+            />
+          )}
+        </div>
       </div>
     </motion.div>
   );
