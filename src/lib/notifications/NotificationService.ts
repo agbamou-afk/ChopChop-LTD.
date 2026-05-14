@@ -204,12 +204,13 @@ async function notifyWithPriority(
   for (const channel of PRIORITY_ORDER) {
     const eligible = canAttempt(channel, opts as NotifyOptions);
     if (!eligible.ok) {
+      const reason = eligible.reason;
       await logAttempt(channel, opts.template, "skipped", {
         userId: opts.userId,
         priority: opts.priority,
-        error: eligible.reason,
+        error: reason,
       });
-      attempts.push({ channel, ok: false, error: eligible.reason });
+      attempts.push({ channel, ok: false, error: reason });
       continue;
     }
     let r: ChannelResult;
