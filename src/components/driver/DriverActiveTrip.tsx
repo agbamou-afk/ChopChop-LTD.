@@ -346,17 +346,24 @@ export function DriverActiveTrip({ rideId, onClose }: Props) {
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
             <DialogTitle className="text-center">Faites scanner ce QR au client</DialogTitle>
+            <DialogDescription className="text-center">
+              Le QR se renouvelle toutes les 30 secondes pour la sécurité.
+            </DialogDescription>
           </DialogHeader>
-          {pickupCode && (
+          {pickupCode ? (
             <div className="flex flex-col items-center gap-3 pb-2">
               <div className="bg-white p-4 rounded-2xl">
                 <QRCode value={qrValue} size={240} />
               </div>
               <p className="text-3xl font-bold tracking-[0.3em] tabular-nums">{pickupCode}</p>
               <p className="text-xs text-muted-foreground text-center">
-                Le QR se renouvelle automatiquement toutes les 30 secondes ({secondsLeft}s).
-                Le client peut aussi saisir le code à 6 caractères.
+                Renouvellement dans {secondsLeft}s · le client peut aussi saisir le code à 6 caractères.
               </p>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center gap-3 py-8">
+              <Loader2 className="w-8 h-8 animate-spin text-primary" />
+              <p className="text-sm text-muted-foreground">Génération du code de prise en charge…</p>
             </div>
           )}
         </DialogContent>
