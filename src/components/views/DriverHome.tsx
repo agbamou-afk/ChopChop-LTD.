@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
-import { Power, Radar, Users, AlertTriangle, Clock, ShieldCheck, FileWarning, Wallet, MapPin, Navigation } from "lucide-react";
+import { Power, Radar, Users, AlertTriangle, Clock, ShieldCheck, FileWarning, Wallet, MapPin, Navigation, Flame, TrendingUp } from "lucide-react";
+import { Marker } from "react-map-gl";
 import { useNavigate } from "react-router-dom";
 import { AppHeader } from "@/components/ui/AppHeader";
 import { Button } from "@/components/ui/button";
@@ -10,6 +11,17 @@ import { Card } from "@/components/ui/card";
 import { formatGNF } from "@/lib/format";
 import { ChopMap, HeatmapLayer } from "@/components/map";
 import { useDriverSession } from "@/contexts/DriverSessionContext";
+
+// Conakry demand hotspots — labeled zones drivers can target when idle.
+// Weight is a proxy for live demand intensity (1 = strongest).
+const CONAKRY_HOTSPOTS = [
+  { name: "Kaloum", lng: -13.7100, lat: 9.5100, weight: 1.0 },
+  { name: "Madina", lng: -13.6650, lat: 9.5550, weight: 0.92 },
+  { name: "Hamdallaye", lng: -13.6450, lat: 9.5800, weight: 0.78 },
+  { name: "Ratoma", lng: -13.6800, lat: 9.6300, weight: 0.7 },
+  { name: "Kipé", lng: -13.6300, lat: 9.6500, weight: 0.55 },
+  { name: "Aéroport", lng: -13.6120, lat: 9.5770, weight: 0.5 },
+] as const;
 
 interface DriverHomeProps {
   onToggleDriverMode: () => void;
