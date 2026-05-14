@@ -3,10 +3,9 @@ import { formatGNF } from "@/lib/format";
 import { MapPin, Navigation, X, Bike, Car, Clock, CreditCard, Loader2, LocateFixed, CheckCircle2 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Marker } from "react-map-gl";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { ChopMap, type ChopMapHandle, MapMarker, PinSet, RoutePolyline, DriverCluster } from "@/components/map";
+import { ChopMap, type ChopMapHandle, PinSet, RoutePolyline, DriverCluster, DraggablePickupPin } from "@/components/map";
 import { RoutingService, decodePolyline, bbox as bboxOf, formatDistance, formatDuration } from "@/lib/maps";
 import { EtaPricePreview } from "@/components/booking/EtaPricePreview";
 
@@ -338,15 +337,12 @@ export function RideBooking({ type, onClose, onBook, initialDestination }: RideB
           {routePolyline && <RoutePolyline encoded={routePolyline} />}
           <DriverCluster variant={type === "toktok" ? "toktok" : "moto"} />
           {/* Draggable pickup */}
-          <Marker
-            longitude={pickupCoords[1]}
-            latitude={pickupCoords[0]}
-            anchor="bottom"
-            draggable
-            onDragEnd={(e) => setPickupCoords([e.lngLat.lat, e.lngLat.lng])}
-          >
-            <MapMarker variant="pickup" pulse={!destCoords} label="Départ" size={36} />
-          </Marker>
+          <DraggablePickupPin
+            lat={pickupCoords[0]}
+            lng={pickupCoords[1]}
+            onDragEnd={(next) => setPickupCoords([next.lat, next.lng])}
+            size={36}
+          />
           {destCoords && (
             <PinSet dropoff={{ lat: destCoords[0], lng: destCoords[1] }} pulseActive="dropoff" />
           )}
