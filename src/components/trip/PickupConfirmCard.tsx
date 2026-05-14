@@ -2,10 +2,12 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ScanLine, KeyRound, Loader2, ShieldCheck } from "lucide-react";
+import { ScanLine, KeyRound, Loader2, ShieldCheck, CheckCircle2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { QrScanner } from "@/components/scanner/QrScanner";
+import { getRuntimeMode } from "@/lib/runtimeMode";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface Props {
   rideId: string;
@@ -24,10 +26,10 @@ export function PickupConfirmCard({ rideId, driverName, pickupCode }: Props) {
   const [manualOpen, setManualOpen] = useState(false);
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
-
-  const isDemo =
-    import.meta.env.DEV ||
-    (typeof window !== "undefined" && /[?&]demo=1/.test(window.location.search));
+  const { user } = useAuth();
+  const mode = getRuntimeMode(user?.email);
+  const isDemo = mode === "demo";
+  const isSandbox = mode === "sandbox";
 
   const submit = async (raw: string) => {
     const value = raw.trim();
@@ -75,11 +77,23 @@ export function PickupConfirmCard({ rideId, driverName, pickupCode }: Props) {
           </p>
         </div>
 
+        {isDemo && pickupCode && (
+          <Button
+            onClick={() => submit(pickupCode)}
+            disabled={busy}
+            className="w-full h-12 gradient-primary text-base font-semibold"
+          >
+            {busy ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <CheckCircle2 className="w-5 h-5 mr-2" />}
+            Confirmer pickup démo
+          </Button>
+        )}
+
         <div className="grid grid-cols-1 gap-2">
           <Button
             onClick={() => setScanning(true)}
             disabled={busy}
-            className="w-full h-11 gradient-primary"
+            className={`w-full h-11 ${isDemo ? "" : "gradient-primary"}`}
+            variant={isDemo ? "outline" : "default"}
           >
             <ScanLine className="w-4 h-4 mr-2" /> Scanner le QR du chauffeur
           </Button>
@@ -112,7 +126,7 @@ export function PickupConfirmCard({ rideId, driverName, pickupCode }: Props) {
           </form>
         )}
 
-        {isDemo && pickupCode && (
+        {isSandbox && pickupCode && (
           <Button
             variant="ghost"
             size="sm"
@@ -120,7 +134,7 @@ export function PickupConfirmCard({ rideId, driverName, pickupCode }: Props) {
             disabled={busy}
             className="w-full text-muted-foreground hover:text-foreground gap-1.5"
           >
-            <ShieldCheck className="h-3.5 w-3.5" /> Bypass démo (test uniquement)
+            <ShieldCheck className="h-3.5 w-3.5" /> Sandbox: force pickup ({pickupCode})
           </Button>
         )}
       </motion.div>
