@@ -3,7 +3,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/co
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { FlaskConical, LogIn, Wallet, Car, Bell, Trash2, RefreshCw, User } from "lucide-react";
+import { FlaskConical, LogIn, Wallet, Car, Bell, Trash2, RefreshCw, User, ShieldCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { chopToast } from "@/lib/toast";
 import { notifications } from "@/lib/notifications";
@@ -109,6 +109,37 @@ export function DemoTestPanel() {
     run("clear-notif", async () => {
       notifications.clear();
       chopToast.success("Notifications locales effacées");
+    });
+
+  const runIntegrityCheck = () =>
+    run("integrity", async () => {
+      if (!user) return chopToast.warning("Connecte-toi à un compte démo d'abord.");
+      const { data: rides, error: rErr } = await supabase
+        .from("rides")
+        .select("id, completed_at")
+        .or(`client_id.eq.${user.id},driver_id.eq.${user.id}`)
+        .eq("status", "completed")
+        .order("completed_at", { ascending: false })
+        .limit(1);
+      if (rErr) return chopToast.error("Lecture courses échouée", { description: rErr.message });
+      const ride = rides?.[0];
+      if (!ride) return chopToast.warning("Aucune course terminée à vérifier.");
+      const { data, error } = await supabase.rpc("ride_integrity_check", { p_ride_id: ride.id });
+      if (error) return chopToast.error("Vérification échouée", { description: error.message });
+      const report = data as { ok: boolean; checks?: Array<{ name: string; ok: boolean }> } | null;
+      const failed = (report?.checks ?? []).filter((c) => !c.ok).map((c) => c.name);
+      // Console dump for full audit trail
+      // eslint-disable-next-line no-console
+      console.log("[ride_integrity_check]", report);
+      if (report?.ok) {
+        chopToast.success("Wallet OK", {
+          description: `Course ${ride.id.slice(0, 8)} • toutes les vérifications passent.`,
+        });
+      } else {
+        chopToast.error("Anomalie détectée", {
+          description: failed.length ? failed.join(", ") : "Voir console pour le rapport.",
+        });
+      }
     });
 
   // Hide entirely if not eligible (extra defence — App.tsx already gates).
@@ -240,6 +271,25 @@ export function DemoTestPanel() {
                 Effacer notifications locales
               </Button>
             </div>
+          </div>
+
+          <div>
+            <h4 className="text-xs uppercase tracking-wide text-muted-foreground mb-2">
+              Intégrité wallet
+            </h4>
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={!!busy || !user}
+              onClick={runIntegrityCheck}
+              className="w-full justify-start gap-2"
+            >
+              <ShieldCheck className="w-4 h-4" />
+              {busy === "integrity" ? "Vérification…" : "Vérifier dernière course terminée"}
+            </Button>
+            <p className="text-[11px] text-muted-foreground mt-1.5">
+              Contrôle débit client, crédit chauffeur, commission, ledger, audit & double capture.
+            </p>
           </div>
 
           <Button
