@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   ChopMap, type ChopMapHandle, PinSet, RoutePolyline,
 } from "@/components/map";
@@ -24,6 +24,7 @@ import { Analytics } from "@/lib/analytics/AnalyticsService";
 import QRCode from "react-qr-code";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { RidePhaseChip, deriveRidePhase } from "@/components/ride/RidePhaseChip";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 type Phase = "approach" | "arrived" | "on_trip" | "at_destination";
 
@@ -46,6 +47,7 @@ export function DriverActiveTrip({ rideId, onClose }: Props) {
   const [busy, setBusy] = useState(false);
   const [clientPhone, setClientPhone] = useState<string | null>(null);
   const [clientName, setClientName] = useState<string | null>(null);
+  const [clientAvatar, setClientAvatar] = useState<string | null>(null);
   const [showReceipt, setShowReceipt] = useState(false);
   const [receiptFare, setReceiptFare] = useState<number>(0);
   const [muted, setMuted] = useState(false);
@@ -93,11 +95,12 @@ export function DriverActiveTrip({ rideId, onClose }: Props) {
   // Lookup client phone for the call button
   useEffect(() => {
     if (!ride?.client_id) return;
-    supabase.from("profiles").select("phone, full_name, display_name")
+    supabase.from("profiles").select("phone, full_name, display_name, avatar_url")
       .eq("user_id", ride.client_id).maybeSingle()
       .then(({ data }) => {
         setClientPhone(data?.phone ?? null);
         setClientName(data?.display_name ?? data?.full_name ?? null);
+        setClientAvatar((data as any)?.avatar_url ?? null);
       });
   }, [ride?.client_id]);
 
@@ -132,6 +135,30 @@ export function DriverActiveTrip({ rideId, onClose }: Props) {
     prevPhaseRef.current = phase;
     if (phase === "arrived" && prev !== "arrived") {
       setQrOpen(true);
+      // Subtle haptic + sound cue when arriving at pickup.
+      try {
+        if (typeof navigator !== "undefined" && "vibrate" in navigator) {
+          (navigator as any).vibrate?.([30, 40, 30]);
+        }
+      } catch {}
+      try {
+        if (!muted && typeof window !== "undefined" && "AudioContext" in window) {
+          const Ctx = (window as any).AudioContext || (window as any).webkitAudioContext;
+          const ctx = new Ctx();
+          const o = ctx.createOscillator();
+          const g = ctx.createGain();
+          o.type = "sine";
+          o.frequency.setValueAtTime(880, ctx.currentTime);
+          o.frequency.exponentialRampToValueAtTime(1320, ctx.currentTime + 0.18);
+          g.gain.setValueAtTime(0.0001, ctx.currentTime);
+          g.gain.exponentialRampToValueAtTime(0.18, ctx.currentTime + 0.02);
+          g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.35);
+          o.connect(g).connect(ctx.destination);
+          o.start();
+          o.stop(ctx.currentTime + 0.4);
+          setTimeout(() => { try { ctx.close(); } catch {} }, 600);
+        }
+      } catch {}
     }
     if (phase === "on_trip" || phase === "at_destination") setQrOpen(false);
   }, [phase, pickupCode]);
@@ -340,29 +367,77 @@ export function DriverActiveTrip({ rideId, onClose }: Props) {
       </div>
 
       <Dialog open={qrOpen} onOpenChange={setQrOpen}>
-        <DialogContent className="sm:max-w-sm">
-          <DialogHeader>
-            <DialogTitle className="text-center">Faites scanner ce QR au client</DialogTitle>
-            <DialogDescription className="text-center">
-              Le QR se renouvelle toutes les 30 secondes pour la sécurité.
-            </DialogDescription>
-          </DialogHeader>
-          {pickupCode ? (
-            <div className="flex flex-col items-center gap-3 pb-2">
-              <div className="bg-white p-4 rounded-2xl">
-                <QRCode value={qrValue} size={240} />
-              </div>
-              <p className="text-3xl font-bold tracking-[0.3em] tabular-nums">{pickupCode}</p>
-              <p className="text-xs text-muted-foreground text-center">
-                Renouvellement dans {secondsLeft}s · le client peut aussi saisir le code à 6 caractères.
-              </p>
-            </div>
-          ) : (
-            <div className="flex flex-col items-center gap-3 py-8">
-              <Loader2 className="w-8 h-8 animate-spin text-primary" />
-              <p className="text-sm text-muted-foreground">Génération du code de prise en charge…</p>
-            </div>
-          )}
+        <DialogContent className="sm:max-w-sm overflow-hidden">
+          <AnimatePresence>
+            {qrOpen && (
+              <motion.div
+                key="qr-body"
+                initial={{ opacity: 0, scale: 0.92, y: 12 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.96, y: 8 }}
+                transition={{ type: "spring", stiffness: 320, damping: 26 }}
+              >
+                <DialogHeader>
+                  <DialogTitle className="text-center">Faites scanner ce QR au client</DialogTitle>
+                  <DialogDescription className="text-center">
+                    Le QR se renouvelle toutes les 30 secondes pour la sécurité.
+                  </DialogDescription>
+                </DialogHeader>
+
+                <div className="mt-3 flex items-center gap-3 rounded-xl border bg-muted/40 p-3">
+                  <Avatar className="h-10 w-10">
+                    {clientAvatar ? <AvatarImage src={clientAvatar} alt={clientName ?? "Client"} /> : null}
+                    <AvatarFallback>
+                      {(clientName ?? "C").trim().charAt(0).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium">{clientName ?? "Client"}</p>
+                    <p className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                      <span className="relative inline-flex h-2 w-2">
+                        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary/60" />
+                        <span className="relative inline-flex h-2 w-2 rounded-full bg-primary" />
+                      </span>
+                      En attente de confirmation client…
+                    </p>
+                  </div>
+                </div>
+
+                {pickupCode ? (
+                  <motion.div
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.08 }}
+                    className="flex flex-col items-center gap-3 pb-2 pt-4"
+                  >
+                    <motion.div
+                      key={qrTick}
+                      initial={{ opacity: 0, scale: 0.96 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ duration: 0.25 }}
+                      className="bg-white p-4 rounded-2xl shadow-sm"
+                    >
+                      <QRCode value={qrValue} size={220} />
+                    </motion.div>
+                    <div className="flex flex-col items-center gap-1">
+                      <p className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                        Code de prise en charge
+                      </p>
+                      <p className="text-3xl font-bold tracking-[0.3em] tabular-nums">{pickupCode}</p>
+                    </div>
+                    <p className="text-xs text-muted-foreground text-center">
+                      Renouvellement dans {secondsLeft}s · le client peut aussi saisir le code à 6 caractères.
+                    </p>
+                  </motion.div>
+                ) : (
+                  <div className="flex flex-col items-center gap-3 py-8">
+                    <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                    <p className="text-sm text-muted-foreground">Génération du code de prise en charge…</p>
+                  </div>
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
         </DialogContent>
       </Dialog>
     </motion.div>
