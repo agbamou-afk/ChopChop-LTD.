@@ -52,7 +52,7 @@ export function useIncomingOffers(enabled: boolean) {
   }, [user?.id]);
 
   useEffect(() => {
-    if (!enabled || !user) { setOffers([]); setRealtimeStatus("disabled"); return; }
+    if (!enabled || !user) { setOffers([]); setLatestOffer(null); setRealtimeStatus("disabled"); return; }
     refetch();
 
     let channel: ReturnType<typeof supabase.channel> | null = null;
