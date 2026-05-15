@@ -6,7 +6,6 @@ import { DriverHome } from "@/components/views/DriverHome";
 import { RideBooking } from "@/components/ride/RideBooking";
 import { LiveTracking, type TrackingMode } from "@/components/tracking/LiveTracking";
 import { RealtimeTripScreen } from "@/components/trip/RealtimeTripScreen";
-import { DemoRideWalkthrough } from "@/components/trip/DemoRideWalkthrough";
 import { QrScanner } from "@/components/scanner/QrScanner";
 import { toast } from "@/hooks/use-toast";
 import { FoodView } from "@/components/views/FoodView";
@@ -130,9 +129,7 @@ const Index = () => {
   //   never waits on a real driver. Used for solo presentations.
   const isLinkedDemo = typeof window !== "undefined"
     && /[?&]demo=linked\b/.test(window.location.search);
-  const isDemoClientAccount = (user?.email ?? "").toLowerCase() === "demo.client@chopchop.gn";
-  const isWalkthroughDemo = isDemoClientAccount && !isLinkedDemo;
-  const isDemoAny = isLinkedDemo || isWalkthroughDemo;
+  const isDemoAny = isLinkedDemo;
   // One-shot guard: only auto-enter driver mode the first time we see this
   // signed-in demo driver. After that, manual toggles win.
   const autoModeAppliedRef = useRef(false);
@@ -475,15 +472,7 @@ const Index = () => {
           />
         )}
         {activeTrip && (
-          isWalkthroughDemo ? (
-            <DemoRideWalkthrough
-              key={`walkthrough-${activeTrip.rideId ?? "demo"}`}
-              mode={activeTrip.mode as "moto" | "toktok"}
-              fare={activeTrip.fare}
-              rideId={activeTrip.rideId}
-              onClose={() => closeActiveTrip(true)}
-            />
-          ) : (typeof window !== "undefined" &&
+          (typeof window !== "undefined" &&
             (localStorage.getItem("cc_realtime_trip") === "1" ||
               /[?&]trip=v2/.test(window.location.search) ||
               /[?&]demo=1/.test(window.location.search) ||
