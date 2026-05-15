@@ -16,7 +16,7 @@ const SCENES: Array<{ key: SceneKey; title: string; caption: string }> = [
   { key: "online",   title: "Passez en ligne", caption: "Activez votre statut pour recevoir des courses." },
   { key: "accept",   title: "Accepter une course", caption: "Une demande arrive — acceptez en un tap." },
   { key: "pickup",   title: "Prise en charge",  caption: "Confirmez le pickup avec le client." },
-  { key: "complete", title: "Terminer",         caption: "Finissez la course et suivez vos gains." },
+  { key: "complete", title: "Gains & CHOPWallet", caption: "Recevez vos gains directement dans votre CHOPWallet via CHOPPay." },
   { key: "heatmap",  title: "Zones actives",    caption: "Placez-vous là où la demande est la plus forte." },
   { key: "final",    title: "Prêt à conduire",  caption: "Conduisez mieux. Gagnez mieux." },
 ];
@@ -225,6 +225,7 @@ export function DriverOnboarding({ onDone }: Props) {
     if (isLast) onDone();
     else setIndex((i) => i + 1);
   };
+  const prev = () => setIndex((i) => Math.max(0, i - 1));
 
   const dots = useMemo(() => SCENES.map((_, i) => i), []);
 
@@ -239,13 +240,17 @@ export function DriverOnboarding({ onDone }: Props) {
       aria-label="Bienvenue chauffeur CHOP CHOP"
     >
       <div className="flex items-center justify-end px-4 pt-[max(1rem,env(safe-area-inset-top))]">
-        <button
-          onClick={onDone}
-          className="inline-flex items-center justify-center w-10 h-10 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
-          aria-label="Fermer"
-        >
-          <X className="w-5 h-5" />
-        </button>
+        {isLast ? (
+          <button
+            onClick={onDone}
+            className="inline-flex items-center justify-center w-10 h-10 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
+            aria-label="Fermer"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        ) : (
+          <span className="w-10 h-10" aria-hidden />
+        )}
       </div>
 
       <div
@@ -259,6 +264,13 @@ export function DriverOnboarding({ onDone }: Props) {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -12 }}
             transition={{ duration: 0.25 }}
+            drag="x"
+            dragConstraints={{ left: 0, right: 0 }}
+            dragElastic={0.2}
+            onDragEnd={(_, info) => {
+              if (info.offset.x < -60) next();
+              else if (info.offset.x > 60) prev();
+            }}
           >
             <Scene scene={scene.key} animated={animated} />
             <div className="text-center mt-5">
@@ -284,13 +296,7 @@ export function DriverOnboarding({ onDone }: Props) {
           onClick={next}
           className="w-full inline-flex items-center justify-center gap-2 px-4 py-4 min-h-[56px] rounded-2xl bg-primary text-primary-foreground font-bold text-base shadow-card hover:opacity-95 transition-opacity"
         >
-          {isLast ? "Commencer" : (<>Suivant <ChevronRight className="w-5 h-5" /></>)}
-        </button>
-        <button
-          onClick={onDone}
-          className="w-full inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-        >
-          Passer
+          {isLast ? "Entrer dans la démo" : (<>Suivant <ChevronRight className="w-5 h-5" /></>)}
         </button>
       </div>
     </motion.div>
