@@ -421,7 +421,12 @@ const Index = () => {
             onBook={async (trip) => {
               const { data: sess } = await supabase.auth.getSession();
               if (!sess.session) {
-                toast({ title: "Connexion requise", description: "Connectez-vous pour réserver." });
+                toast({
+                  title: "Créez votre compte pour réserver une vraie course.",
+                  description: "Connectez-vous pour confirmer cette course.",
+                });
+                const next = encodeURIComponent("/");
+                navigate(`/auth?next=${next}`);
                 return;
               }
               const holdAmount = Math.ceil(trip.fare * 1.1);
