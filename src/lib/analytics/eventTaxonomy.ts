@@ -73,6 +73,8 @@ export const EVENTS = {
 
   // --- Wallet ---
   "wallet.viewed": "wallet",
+  "wallet.history.viewed": "wallet",
+  "wallet.empty_state.viewed": "wallet",
   "wallet.topup.started": "wallet",
   "wallet.topup.completed": "wallet",
   "wallet.topup.failed": "wallet",
@@ -86,6 +88,7 @@ export const EVENTS = {
   "driver.ride.accepted": "driver",
   "driver.ride.declined": "driver",
   "driver.ride.completed": "driver",
+  "driver.search.reassurance.shown": "driver",
   "driver.application.step": "driver",
   "driver.application.submitted": "driver",
   "driver.application.approved": "driver",
@@ -93,6 +96,15 @@ export const EVENTS = {
   "driver.cash.over_limit": "driver",
   "driver.cash.settle.requested": "driver",
   "driver.support.opened": "driver",
+
+  // --- Onboarding & retention ---
+  "onboarding.viewed": "session",
+  "onboarding.step.viewed": "session",
+  "onboarding.completed": "session",
+  "onboarding.skipped": "session",
+  "home.welcome_back.viewed": "session",
+  "ride.connection.restored": "session",
+  "client.ride.completed": "session",
 
   // --- Maps / routing / location (Day 6) ---
   "map.loaded": "map",
