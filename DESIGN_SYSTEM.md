@@ -1,24 +1,42 @@
 # CHOP CHOP — Design System
 
+> **2026 evolution pass — warm modern African urbanism.**
+> Visual language inspired by the new logo: movement, warmth, ecosystem flow,
+> premium simplicity. Think *Grab × Linear × African warmth*. Avoid neon,
+> crypto, cyberpunk, generic fintech blue, or Uber black/white.
+
 ## Colors (HSL semantic tokens)
 Defined in `src/index.css`. Always reference via Tailwind classes (`bg-primary`, `text-foreground`, etc.) — never hex.
 
 | Token | Light HSL | Use |
 |---|---|---|
-| `--primary` (CHOP green) | `138 64% 39%` | Primary actions, brand accents |
+| `--primary` (deep CHOP green) | `152 58% 34%` | Primary CTAs, ride confirm, CHOPWallet, CHOPPay, earnings |
 | `--primary-foreground` | `0 0% 100%` | Text on primary |
-| `--secondary` (CHOP gold) | `45 90% 62%` | Highlights, ratings, badges |
-| `--destructive` (CHOP red) | `2 75% 56%` | Errors, danger, urgent badge |
-| `--success` | `138 64% 39%` | Success states |
-| `--warning` | `45 90% 62%` | Warnings |
-| `--background` / `--foreground` | `0 0% 100%` / `0 0% 7%` | Page surfaces |
-| `--card` / `--card-foreground` | `0 0% 100%` / `0 0% 7%` | Card surfaces |
-| `--muted` / `--muted-foreground` | `0 0% 96%` / `0 0% 40%` | Subtle surfaces, helper text |
-| `--border` / `--input` | `0 0% 92%` | Borders & input outlines |
-| `--brand-green-muted` | `138 35% 92%` | Soft green chips, success bg |
-| `--brand-yellow-muted` | `45 85% 92%` | Soft gold chips |
-| `--brand-red-muted` | `2 70% 94%` | Soft red chips, urgent bg |
-| `--brand-gray` | `0 0% 96%` | Neutral light surface |
+| `--secondary` (warm saffron) | `38 92% 58%` | Highlights, demand pulses, onboarding accents |
+| `--destructive` (soft ember) | `12 78% 56%` | Urgency, destructive, live ops moments |
+| `--success` | `152 58% 34%` | Success states (mirrors primary) |
+| `--warning` | `38 92% 58%` | Warnings |
+| `--background` (cream) | `36 30% 98%` | Page surface — never cold white |
+| `--foreground` (warm slate) | `160 18% 12%` | Ink — never pure black |
+| `--muted` / `--muted-foreground` | `38 25% 95%` / `160 10% 38%` | Sand surfaces, helper text |
+| `--border` / `--input` | `38 18% 90%` | Subtle warm outlines |
+| `--brand-green-muted` | `152 35% 92%` | Soft green chips |
+| `--brand-yellow-muted` | `38 85% 93%` | Soft gold chips |
+| `--brand-red-muted` | `12 70% 95%` | Soft ember chips |
+
+### Gradients
+- `--gradient-primary` — deep CHOP green, used on primary CTAs and badges
+- `--gradient-secondary` — saffron→amber, demand & highlight pulses
+- `--gradient-hero` — vertical green for hero/wallet backdrops
+- `--gradient-ember` — urgency / live-ops accents (sparingly)
+- `--gradient-map-overlay` — soft green-glass scrim for map surfaces
+- `--gradient-wallet` — radial emerald, CHOPWallet card only
+
+### Elevation
+- `shadow-card` — default card lift (warm-tinted)
+- `shadow-soft` — drawers, sticky headers
+- `shadow-elevated` — modals, FABs, primary CTAs
+- `--shadow-glow-primary` — focus glow for CHOPPay / confirm actions
 
 Service accents already exist: `--accent-{moto,toktok,repas,marche,envoyer,scanner}`.
 
@@ -77,11 +95,34 @@ Avoid stacking multiple shadows. Never use Tailwind's `shadow-2xl`.
 
 ## Motion
 - Library: Framer Motion
-- Tap: `whileTap={{ scale: 0.97 }}`
-- Hover (desktop only): `whileHover={{ scale: 1.02 }}`
+- Easing: `cubic-bezier(0.22, 1, 0.36, 1)` — flowing, infrastructural
+- Tap: `whileTap={{ scale: 0.98 }}` (was 0.97 — calmer)
+- Hover (desktop only): `whileHover={{ scale: 1.015 }}`
 - Page transitions: `fade-in` 200ms
 - Sheets: `slide-up` 300ms, ease-out
-- Never use spinning/bouncy easings on transactional UI
+- BottomNav active pill: layout transition `tween` 350ms (no spring bounce)
+- Avoid: bouncy springs, gaming easings, spinning loaders on transactional UI
+- Prefer: directional flow, opacity + subtle translate, restrained scale
+
+## Branding copy
+- **CHOPWallet** replaces "Portefeuille" everywhere user-facing.
+  Examples: *Solde CHOPWallet*, *Recharger CHOPWallet*, *Historique CHOPWallet*.
+- **CHOPPay** is the payments mark. *Payer avec CHOPPay*, *Reçu CHOPPay*.
+- Keep usage premium and subtle — do not spam the brand on every label.
+- Legal documents keep formal "Portefeuille" terminology.
+
+## Map styling accents
+- Heatmap gradient: warm green → saffron (no red unless surge urgent)
+- Driver markers: emerald arrow with subtle pulse ring (see `DriverPositionMarker`)
+- Overlays use `--gradient-map-overlay` for legibility scrims
+- Demand zones: `hsl(var(--secondary) / 0.25)` fill, `hsl(var(--primary))` stroke
+
+## Iconography direction
+- Library: `lucide-react` only — keep stroke 1.75 (was default 1.5) for warmer presence
+- Rounded geometry, soft corners, transportation-inspired motion glyphs
+- Client tiles: lifestyle tone, `bg-brand-green-muted` chips
+- Driver tiles: operational tone, `bg-muted` chips with `text-foreground`
+- Service accent backgrounds use `--accent-{moto,toktok,repas,marche,envoyer,scanner}`
 
 ## Money formatting
 Always via `formatGNF(amount)` from `src/lib/format.ts` → `2 500 000 GNF` (NBSP separators, suffix).
