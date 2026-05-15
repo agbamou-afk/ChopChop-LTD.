@@ -92,6 +92,10 @@ export function IncomingRequestIsland({
               aria-hidden
             />
           )}
+          <div
+            className="fixed inset-0 z-[60] flex items-center justify-center pointer-events-none px-3"
+            aria-hidden={false}
+          >
           <motion.div
             initial={{ opacity: 0, scale: 0.96 }}
             animate={
@@ -108,9 +112,8 @@ export function IncomingRequestIsland({
             role="dialog"
             aria-label="Nouvelle demande de course"
             onPointerDownCapture={() => setInteracted(true)}
-            className="fixed left-1/2 top-1/2 z-[60] w-[min(340px,calc(100vw-24px))] -translate-x-1/2 -translate-y-1/2 will-change-transform"
+            className="w-[min(340px,100%)] will-change-transform pointer-events-auto rounded-3xl bg-card/95 border border-border/60 shadow-elevated overflow-hidden"
           >
-          <div className="pointer-events-auto rounded-3xl bg-card/95 border border-border/60 shadow-elevated overflow-hidden">
             {/* Countdown */}
             <CountdownBar id={request.id} duration={timeoutSec} urgent={urgent} />
 
@@ -184,8 +187,8 @@ export function IncomingRequestIsland({
                 </button>
               </div>
             </div>
-          </div>
           </motion.div>
+          </div>
         </>
       )}
     </AnimatePresence>
