@@ -29,6 +29,13 @@ interface Props {
  * Animates a CHOP-branded search pulse, then resolves to a matched
  * driver card or a "no driver available" state with retry.
  */
+const REASSURANCE: string[] = [
+  "Recherche de chauffeurs proches…",
+  "Analyse des motos disponibles autour de vous…",
+  "Priorité aux chauffeurs les mieux notés…",
+  "Optimisation du temps d'arrivée…",
+];
+
 export function DriverSearchOverlay({
   open,
   phase,
@@ -39,6 +46,7 @@ export function DriverSearchOverlay({
   onConfirmMatch,
 }: Props) {
   const [elapsed, setElapsed] = useState(0);
+  const [hint, setHint] = useState(0);
 
   useEffect(() => {
     if (!open || phase !== "searching") {
@@ -51,6 +59,29 @@ export function DriverSearchOverlay({
     }, 1000);
     return () => window.clearInterval(t);
   }, [open, phase]);
+
+  // Rotate calm reassurance copy after 6s so users feel the system is alive
+  // even when matching takes a moment.
+  useEffect(() => {
+    if (!open || phase !== "searching") {
+      setHint(0);
+      return;
+    }
+    const t = window.setInterval(() => {
+      setHint((i) => {
+        const next = (i + 1) % REASSURANCE.length;
+        if (next === 1) {
+          try {
+            Analytics.track("driver.search.reassurance.shown" as any, {
+              metadata: { service_type: serviceType },
+            });
+          } catch {}
+        }
+        return next;
+      });
+    }, 3500);
+    return () => window.clearInterval(t);
+  }, [open, phase, serviceType]);
 
   // Fire analytics on phase transitions
   useEffect(() => {
@@ -114,12 +145,17 @@ export function DriverSearchOverlay({
                 </div>
               </div>
             </div>
-            <p className="text-base font-medium">
-              Recherche de chauffeurs proches…
+            <p className="text-base font-medium min-h-[1.5em] transition-opacity duration-300">
+              {REASSURANCE[hint]}
             </p>
             <p className="text-xs text-muted-foreground mt-1 tabular-nums">
               {elapsed}s écoulées
             </p>
+            {elapsed >= 12 && (
+              <p className="text-[11px] text-muted-foreground mt-3 max-w-[18rem]">
+                Plus de chauffeurs arrivent dans votre zone — merci de patienter quelques instants.
+              </p>
+            )}
           </>
         )}
 

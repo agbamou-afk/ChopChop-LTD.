@@ -5,6 +5,7 @@ import { ClientTripReceipt } from "./ClientTripReceipt";
 import { PickupConfirmCard } from "./PickupConfirmCard";
 import { useRideRealtime } from "@/hooks/useRideRealtime";
 import { useRideLifecycleNotifications } from "@/hooks/useRideLifecycleNotifications";
+import { useConnectionRestored } from "@/hooks/useConnectionRestored";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { useEffect, useRef, useState } from "react";
@@ -33,6 +34,7 @@ export function RealtimeTripScreen({ rideId, mode, holdId, onClose }: Props) {
   const settled = useRef(false);
   const { ride } = useRideRealtime(rideId);
   useRideLifecycleNotifications(ride, "client");
+  useConnectionRestored({ context: `client-trip:${mode}` });
   const [driverName, setDriverName] = useState<string | null>(null);
   const [showReceipt, setShowReceipt] = useState(false);
 
