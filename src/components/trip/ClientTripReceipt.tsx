@@ -1,12 +1,13 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { CheckCircle2, Star, Loader2, Wallet, Banknote, Receipt, Heart, User } from "lucide-react";
+import { CheckCircle2, Star, Loader2, Wallet, Banknote, Receipt, Heart, User, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { formatGNF } from "@/lib/format";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { Analytics } from "@/lib/analytics/AnalyticsService";
+import { SecuredByChopPay } from "@/components/trust/TrustCues";
 
 interface Props {
   rideId: string;
@@ -29,6 +30,15 @@ export function ClientTripReceipt({
   const [comment, setComment] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+
+  useEffect(() => {
+    try {
+      Analytics.track("receipt.viewed" as any, {
+        metadata: { role: "client", rideId, payment: paymentLabel },
+      });
+    } catch {}
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const submit = async () => {
     setSubmitting(true);
@@ -66,6 +76,9 @@ export function ClientTripReceipt({
           {formatGNF(fareGnf)}
         </motion.p>
         <p className="text-xs opacity-80 mt-1">Total payé · {paymentLabel}</p>
+        <p className="text-[11px] opacity-90 mt-1 inline-flex items-center gap-1 justify-center">
+          <ShieldCheck className="w-3 h-3" /> Paiement confirmé · CHOPPay
+        </p>
       </div>
 
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
@@ -95,6 +108,7 @@ export function ClientTripReceipt({
           <div className="border-t border-border pt-2 mt-1">
             <Row icon={Wallet} label="Total" value={formatGNF(fareGnf)} bold />
           </div>
+          <SecuredByChopPay className="pt-1" />
         </section>
 
         <section className="rounded-xl border border-border bg-card p-4 space-y-3">

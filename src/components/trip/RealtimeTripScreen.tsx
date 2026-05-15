@@ -10,6 +10,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { useEffect, useRef, useState } from "react";
 import { RidePhaseChip, deriveRidePhase } from "@/components/ride/RidePhaseChip";
+import { TrustCues } from "@/components/trust/TrustCues";
+import { Analytics } from "@/lib/analytics/AnalyticsService";
 
 interface Props {
   rideId: string;
@@ -46,6 +48,14 @@ export function RealtimeTripScreen({ rideId, mode, holdId, onClose }: Props) {
   useEffect(() => {
     if (ride?.status === "completed") setShowReceipt(true);
   }, [ride?.status]);
+
+  useEffect(() => {
+    try {
+      Analytics.track("ride.trust_message_viewed" as any, {
+        metadata: { surface: "realtime_trip", mode },
+      });
+    } catch {}
+  }, [mode]);
 
   useEffect(() => {
     if (!ride?.driver_id) return;
@@ -111,6 +121,9 @@ export function RealtimeTripScreen({ rideId, mode, holdId, onClose }: Props) {
           {ride && <RidePhaseChip phase={deriveRidePhase(ride)} size="sm" />}
         </div>
         <div className="w-9" />
+      </div>
+      <div className="px-4 py-2 bg-card/60 border-b border-border/60">
+        <TrustCues cues={["live", "choppay", "support"]} compact className="justify-center" />
       </div>
 
       <div className="flex-1 min-h-0">
