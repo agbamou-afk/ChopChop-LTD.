@@ -58,13 +58,16 @@ export function useDriverSession() {
 export function DriverSessionProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const { profile, loading: profileLoading, refetch } = useDriverProfile();
+  // Synthetic auto-offers are only legitimate in sandbox mode (internal
+  // testing). In demo mode the linked client creates the real ride and we
+  // must NOT spawn fake offers on top of it.
   const isDemoDriver = (user?.email ?? "").toLowerCase() === "demo.driver@chopchop.gn";
-  const demoModeOn = typeof window !== "undefined" && (
+  const sandboxOn = typeof window !== "undefined" && (
     import.meta.env.DEV ||
-    /[?&](demo|debug)=1/.test(window.location.search) ||
-    window.location.hostname.includes("lovable")
+    /[?&]sandbox=1/.test(window.location.search) ||
+    /[?&]debug=1/.test(window.location.search)
   );
-  const demoAutoOffer = isDemoDriver && demoModeOn;
+  const demoAutoOffer = isDemoDriver && sandboxOn;
   const [isOnline, setIsOnline] = useState(false);
   const [toggling, setToggling] = useState(false);
   const [current, setCurrent] = useState<IncomingRequest | null>(null);
