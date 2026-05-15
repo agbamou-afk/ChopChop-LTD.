@@ -16,7 +16,7 @@ interface BottomNavProps {
 const userTabs: Tab[] = [
   { id: "home", icon: Home, label: "Accueil" },
   { id: "orders", icon: ShoppingBag, label: "Activité" },
-  { id: "wallet", icon: Wallet, label: "Portefeuille" },
+  { id: "wallet", icon: Wallet, label: "CHOPWallet" },
   { id: "profile", icon: User, label: "Compte" },
 ];
 
@@ -86,8 +86,8 @@ function NavButton({
       {active && (
         <motion.div
           layoutId="activeTab"
-          className="absolute inset-0 bg-primary/10 rounded-xl"
-          transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+          className="absolute inset-0 rounded-2xl bg-gradient-to-b from-primary/12 to-primary/5 ring-1 ring-primary/15"
+          transition={{ type: "tween", ease: [0.22, 1, 0.36, 1], duration: 0.35 }}
         />
       )}
       <tab.icon
