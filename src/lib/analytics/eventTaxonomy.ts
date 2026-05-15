@@ -106,6 +106,11 @@ export const EVENTS = {
   "ride.connection.restored": "session",
   "client.ride.completed": "session",
 
+  // --- Trust & Retention (Pass 2) ---
+  "ride.trust_message_viewed": "session",
+  "driver.trust_message_viewed": "driver",
+  "receipt.viewed": "session",
+
   // --- Maps / routing / location (Day 6) ---
   "map.loaded": "map",
   "map.load.failed": "map",
