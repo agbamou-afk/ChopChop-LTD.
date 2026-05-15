@@ -116,8 +116,8 @@ export function AppHeader({
     userInitial ?? (displayName ? displayName.charAt(0).toUpperCase() : "?");
 
   const cardClass = isDriverMode
-    ? "relative overflow-hidden bg-card rounded-[28px] shadow-soft px-5 pt-4 pb-5 border border-secondary/30"
-    : "relative overflow-hidden bg-card rounded-[28px] shadow-soft px-5 pt-4 pb-5 border border-border/60";
+    ? "relative overflow-hidden bg-gradient-to-b from-card to-secondary/5 rounded-[28px] shadow-soft px-5 pt-4 pb-5 border border-secondary/30"
+    : "relative overflow-hidden bg-gradient-to-b from-card to-primary/5 rounded-[28px] shadow-soft px-5 pt-4 pb-5 border border-border/60";
   const avatarColor = isDriverMode ? "text-secondary" : "text-primary";
 
   const menuItems = [
@@ -135,8 +135,10 @@ export function AppHeader({
         className={cardClass}
       >
         {/* Soft brand wash — anchors the hero without competing with content */}
-        <div className="pointer-events-none absolute -top-24 -right-20 w-64 h-64 rounded-full bg-primary/10 blur-3xl" aria-hidden />
-        <div className="pointer-events-none absolute -bottom-28 -left-16 w-56 h-56 rounded-full bg-secondary/10 blur-3xl" aria-hidden />
+        <div className="pointer-events-none absolute -top-24 -right-20 w-64 h-64 rounded-full bg-primary/12 blur-3xl" aria-hidden />
+        <div className="pointer-events-none absolute -bottom-28 -left-16 w-56 h-56 rounded-full bg-secondary/14 blur-3xl" aria-hidden />
+        {/* Saffron flow seam — echoes the logo's directional movement */}
+        <div className="pointer-events-none absolute inset-x-6 top-0 h-px bg-gradient-to-r from-transparent via-secondary/50 to-transparent" aria-hidden />
 
         <div className="flex items-center justify-between">
           <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
@@ -283,12 +285,14 @@ export function AppHeader({
         >
           <div className="absolute inset-0 opacity-30 pointer-events-none">
             <div className="absolute -top-10 -right-10 w-40 h-40 rounded-full bg-white/10 blur-2xl" />
+            <div className="absolute -bottom-12 -left-10 w-32 h-32 rounded-full bg-secondary/30 blur-2xl" />
           </div>
+          <div className="pointer-events-none absolute inset-x-4 top-0 h-px bg-gradient-to-r from-transparent via-secondary/60 to-transparent" aria-hidden />
           <div className="flex items-center justify-between relative">
             <div className="min-w-0">
               <div className="flex items-center gap-2 opacity-90">
-                <Wallet className="w-4 h-4" />
-                <span className="text-[11px] uppercase tracking-wider">{amountLabel}</span>
+                <Wallet className="w-4 h-4" strokeWidth={2} />
+                <span className="text-[11px] uppercase tracking-[0.18em] font-semibold">CHOPWallet</span>
               </div>
               {amountLoading ? (
                 <div className="mt-1 h-7 w-32 rounded bg-white/20 animate-pulse" aria-label="Chargement du solde" />
