@@ -117,21 +117,28 @@ export function IncomingRequestIsland({
             role="dialog"
             aria-label="Nouvelle demande de course"
             onPointerDownCapture={() => setInteracted(true)}
-            className="w-[min(340px,100%)] will-change-transform pointer-events-auto rounded-3xl bg-card/95 border border-border/60 shadow-elevated overflow-hidden"
+            className="w-[min(340px,100%)] will-change-transform pointer-events-auto rounded-3xl bg-card/95 border border-primary/20 shadow-elevated overflow-hidden ring-1 ring-primary/10"
+            style={{ boxShadow: "var(--shadow-glow-primary), var(--shadow-elevated)" }}
           >
+            {/* Brand seam — saffron→ember directional flow */}
+            <div className="pointer-events-none h-[3px] bg-gradient-to-r from-primary via-secondary to-primary" aria-hidden />
             {/* Countdown */}
             <CountdownBar id={request.id} duration={timeoutSec} urgent={urgent} />
 
             <div className="p-3.5 space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-[10.5px] font-medium uppercase tracking-[0.14em] text-primary/90">
+                <span className="inline-flex items-center gap-1.5 text-[10.5px] font-bold uppercase tracking-[0.16em] text-primary">
+                  <span className="relative flex h-1.5 w-1.5">
+                    <span className="absolute inline-flex h-full w-full rounded-full bg-primary/60 animate-ping" />
+                    <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-primary" />
+                  </span>
                   Nouvelle course
                 </span>
                 <div
                   className={`flex items-center gap-1 px-2 py-0.5 rounded-full font-medium tabular-nums text-[11px] ${
                     urgent
                       ? "bg-destructive/15 text-destructive"
-                      : "bg-muted text-foreground"
+                      : "bg-secondary/15 text-secondary-foreground"
                   }`}
                 >
                   <Clock className="w-3 h-3" />
