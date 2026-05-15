@@ -234,7 +234,7 @@ export function DriverOnboarding({ onDone }: Props) {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[80] bg-background flex flex-col touch-none"
+      className="fixed inset-0 z-[80] surface-warm flex flex-col touch-none"
       role="dialog"
       aria-modal="true"
       aria-label="Bienvenue chauffeur CHOP CHOP"
@@ -294,7 +294,7 @@ export function DriverOnboarding({ onDone }: Props) {
         </div>
         <button
           onClick={next}
-          className="w-full inline-flex items-center justify-center gap-2 px-4 py-4 min-h-[56px] rounded-2xl bg-primary text-primary-foreground font-bold text-base shadow-card hover:opacity-95 transition-opacity"
+          className="w-full inline-flex items-center justify-center gap-2 px-4 py-4 min-h-[56px] rounded-2xl gradient-cta text-primary-foreground font-bold text-base active:scale-[0.985] transition"
         >
           {isLast ? "Entrer dans la démo" : (<>Suivant <ChevronRight className="w-5 h-5" /></>)}
         </button>
