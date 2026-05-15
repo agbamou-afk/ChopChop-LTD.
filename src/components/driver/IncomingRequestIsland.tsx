@@ -77,15 +77,21 @@ export function IncomingRequestIsland({
     <AnimatePresence>
       {request && (
         <>
-          {/* Lightweight translucent overlay (no blur) for focus. */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.25, ease: "easeOut" }}
-            className="fixed inset-0 z-[55] pointer-events-none bg-background/15"
-            aria-hidden
-          />
+          {/* Soft focus wash — no backdrop-filter, opacity-only, disabled in low-data mode */}
+          {!low && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.3, ease: "easeOut" }}
+              className="fixed inset-0 z-[55] pointer-events-none"
+              style={{
+                background:
+                  "radial-gradient(circle at 50% 45%, rgba(0,0,0,0) 0%, rgba(0,0,0,0.06) 55%, rgba(0,0,0,0.10) 100%)",
+              }}
+              aria-hidden
+            />
+          )}
           <motion.div
             initial={{ opacity: 0, scale: 0.96 }}
             animate={
