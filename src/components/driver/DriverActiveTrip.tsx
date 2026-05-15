@@ -25,6 +25,8 @@ import QRCode from "react-qr-code";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { RidePhaseChip, deriveRidePhase } from "@/components/ride/RidePhaseChip";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { getRuntimeMode } from "@/lib/runtimeMode";
+import { useAuth } from "@/contexts/AuthContext";
 
 type Phase = "approach" | "arrived" | "on_trip" | "at_destination";
 
@@ -43,6 +45,8 @@ interface Props {
 export function DriverActiveTrip({ rideId, onClose }: Props) {
   const { ride, loading } = useRideRealtime(rideId);
   useRideLifecycleNotifications(ride, "driver");
+  const { user } = useAuth();
+  const runtimeMode = getRuntimeMode(user?.email);
   const mapRef = useRef<ChopMapHandle>(null);
   const [busy, setBusy] = useState(false);
   const [clientPhone, setClientPhone] = useState<string | null>(null);
@@ -66,9 +70,8 @@ export function DriverActiveTrip({ rideId, onClose }: Props) {
     window.open(url, "_blank", "noopener");
   };
 
-  const isDemo =
-    import.meta.env.DEV ||
-    (typeof window !== "undefined" && /[?&]demo=1/.test(window.location.search));
+  // Demo and sandbox both relax the strict "wait for client scan" gate.
+  const isDemo = runtimeMode === "demo" || runtimeMode === "sandbox";
   const pickupCode = (ride?.metadata as any)?.pickup_code as string | undefined;
 
   // Auto-popup QR when driver confirms arrival, with a fresh token every 30s.
