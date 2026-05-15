@@ -25,7 +25,7 @@ const SCENES: Array<{ key: SceneKey; title: string; caption: string }> = [
   { key: "ride", title: "Course", caption: "Commandez une moto en quelques secondes." },
   { key: "marche", title: "Marché", caption: "Achetez au Marché et faites livrer." },
   { key: "repas", title: "Repas", caption: "Commandez vos repas préférés." },
-  { key: "wallet", title: "Wallet", caption: "Rechargez votre wallet et payez simplement." },
+  { key: "wallet", title: "CHOPWallet", caption: "Rechargez votre CHOPWallet et payez simplement avec CHOPPay." },
   { key: "final", title: "Bienvenue", caption: "Tout. Partout. Pour Tous." },
 ];
 
@@ -170,14 +170,14 @@ function WalletScene({ animated }: { animated: boolean }) {
         animate={{ opacity: 1, y: 0 }}
         className="rounded-2xl gradient-wallet p-4 text-primary-foreground shadow-card"
       >
-        <p className="text-[11px] opacity-80">Solde CHOP Wallet</p>
+        <p className="text-[11px] opacity-80">Solde CHOPWallet</p>
         <p className="text-2xl font-extrabold tracking-tight">125 000 GNF</p>
         <div className="flex items-center gap-2 mt-2">
           <div className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-white/15 text-[11px] font-semibold">
             <Plus className="w-3 h-3" /> Recharger
           </div>
           <div className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-white/15 text-[11px] font-semibold">
-            <Wallet className="w-3 h-3" /> Payer
+            <Wallet className="w-3 h-3" /> Payer · CHOPPay
           </div>
         </div>
       </motion.div>
