@@ -202,6 +202,9 @@ const Index = () => {
   // ignored so they never trap the user on the tracking screen.
   useEffect(() => {
     if (!user || isDriverMode || activeTrip || restoreAttemptedRef.current) return;
+    // Demo mode = calm guided showroom: never auto-restore an in-flight ride
+    // on the client. The user must intentionally tap a dashboard action.
+    if (isLinkedDemo) { restoreAttemptedRef.current = true; return; }
     restoreAttemptedRef.current = true;
     let cancelled = false;
     (async () => {
