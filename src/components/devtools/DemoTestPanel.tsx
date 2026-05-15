@@ -186,12 +186,14 @@ export function DemoTestPanel() {
       });
     });
 
-  // Hide entirely if not eligible (extra defence — App.tsx already gates).
-  const enabled =
+  // Sandbox-only surface. Admins can still flip ?sandbox=1 to use it in
+  // production; demo-mode presentations are kept clutter-free.
+  if (typeof window === "undefined") return null;
+  const inSandbox =
     import.meta.env.DEV ||
-    (typeof window !== "undefined" && /[?&]demo=1/.test(window.location.search)) ||
-    isAdmin;
-  if (!enabled) return null;
+    /[?&]sandbox=1/.test(window.location.search) ||
+    /[?&]field=1/.test(window.location.search);
+  if (!inSandbox && !isAdmin) return null;
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
