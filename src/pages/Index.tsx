@@ -6,6 +6,7 @@ import { DriverHome } from "@/components/views/DriverHome";
 import { RideBooking } from "@/components/ride/RideBooking";
 import { LiveTracking, type TrackingMode } from "@/components/tracking/LiveTracking";
 import { RealtimeTripScreen } from "@/components/trip/RealtimeTripScreen";
+import { DemoRideWalkthrough } from "@/components/trip/DemoRideWalkthrough";
 import { QrScanner } from "@/components/scanner/QrScanner";
 import { toast } from "@/hooks/use-toast";
 import { FoodView } from "@/components/views/FoodView";
@@ -122,13 +123,16 @@ const Index = () => {
   const { roles, user } = useAuth();
   const isDriver = roles.includes("driver");
   const navigate = useNavigate();
-  // Linked demo mode: demo client account OR explicit ?demo=linked flag.
-  const isLinkedDemo = (() => {
-    const email = (user?.email ?? "").toLowerCase();
-    if (email === "demo.client@chopchop.gn") return true;
-    if (typeof window !== "undefined" && /[?&]demo=linked\b/.test(window.location.search)) return true;
-    return false;
-  })();
+  // Demo mode flavours:
+  // - linked E2E (sandbox): explicit `?demo=linked` — hands the ride to the
+  //   real demo driver account. Used for two-account presentations.
+  // - walkthrough (default for demo client): self-guided clickthrough that
+  //   never waits on a real driver. Used for solo presentations.
+  const isLinkedDemo = typeof window !== "undefined"
+    && /[?&]demo=linked\b/.test(window.location.search);
+  const isDemoClientAccount = (user?.email ?? "").toLowerCase() === "demo.client@chopchop.gn";
+  const isWalkthroughDemo = isDemoClientAccount && !isLinkedDemo;
+  const isDemoAny = isLinkedDemo || isWalkthroughDemo;
   // One-shot guard: only auto-enter driver mode the first time we see this
   // signed-in demo driver. After that, manual toggles win.
   const autoModeAppliedRef = useRef(false);
@@ -206,7 +210,7 @@ const Index = () => {
     if (!user || isDriverMode || activeTrip || restoreAttemptedRef.current) return;
     // Demo mode = calm guided showroom: never auto-restore an in-flight ride
     // on the client. The user must intentionally tap a dashboard action.
-    if (isLinkedDemo) { restoreAttemptedRef.current = true; return; }
+    if (isDemoAny) { restoreAttemptedRef.current = true; return; }
     restoreAttemptedRef.current = true;
     let cancelled = false;
     (async () => {
@@ -445,7 +449,8 @@ const Index = () => {
                 return;
               }
               const newRideId = (ride as { id: string }).id;
-              // Linked demo: hand the ride to the demo driver as a real offer.
+              // Linked demo (sandbox E2E): hand the ride to the demo driver
+              // as a real offer. Walkthrough demo never links.
               if (isLinkedDemo) {
                 try {
                   await supabase.rpc("demo_link_ride" as never, { p_ride_id: newRideId } as never);
@@ -470,7 +475,15 @@ const Index = () => {
           />
         )}
         {activeTrip && (
-          (typeof window !== "undefined" &&
+          isWalkthroughDemo ? (
+            <DemoRideWalkthrough
+              key={`walkthrough-${activeTrip.rideId ?? "demo"}`}
+              mode={activeTrip.mode as "moto" | "toktok"}
+              fare={activeTrip.fare}
+              rideId={activeTrip.rideId}
+              onClose={() => closeActiveTrip(true)}
+            />
+          ) : (typeof window !== "undefined" &&
             (localStorage.getItem("cc_realtime_trip") === "1" ||
               /[?&]trip=v2/.test(window.location.search) ||
               /[?&]demo=1/.test(window.location.search) ||
