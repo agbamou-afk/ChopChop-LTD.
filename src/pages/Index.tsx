@@ -44,6 +44,8 @@ export type ActiveView = "home" | "food" | "market" | "wallet" | "profile" | "or
 function DriverGlobalAlert({ activeTab, onView }: { activeTab: string; onView: () => void }) {
   const { queue, activeTrip, activeRideId } = useDriverSession();
   if (queue.length === 0 || activeTrip || activeRideId) return null;
+  // Courses tab already shows the floating island popup — avoid duplicate alerts.
+  if (activeTab === "orders") return null;
   return <DriverRideAlertBanner activeTab={activeTab} onView={onView} />;
 }
 

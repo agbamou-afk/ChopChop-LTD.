@@ -1,9 +1,10 @@
 import { motion } from "framer-motion";
 import { Marker } from "react-map-gl";
 import { formatGNF } from "@/lib/format";
-import { Users, Timer, BellRing, Flame, Navigation } from "lucide-react";
 import { useDriverSession } from "@/contexts/DriverSessionContext";
-import { IncomingRequestPopup } from "@/components/driver/IncomingRequestPopup";
+import { Users, Timer, BellRing, Flame, Navigation } from "lucide-react";
+import { IncomingRequestIsland } from "@/components/driver/IncomingRequestIsland";
+import { MenuButton } from "@/components/ui/MainMenuSheet";
 import { ChopMap, HeatmapLayer } from "@/components/map";
 
 const CONAKRY_HOTSPOTS = [
@@ -69,8 +70,9 @@ export function DriverOrdersView() {
         className="absolute left-0 right-0 px-4 z-10"
         style={{ top: "max(0.75rem, env(safe-area-inset-top))" }}
       >
-        <div className="max-w-md mx-auto flex items-center justify-between">
-          <div className="min-w-0">
+        <div className="max-w-md mx-auto flex items-center gap-3">
+          <MenuButton floating />
+          <div className="min-w-0 flex-1">
             <h1 className="text-lg font-extrabold text-foreground leading-tight">Mes courses</h1>
             <p className="text-[11px] text-muted-foreground">Zones actives · Conakry</p>
           </div>
@@ -184,8 +186,8 @@ export function DriverOrdersView() {
         </div>
       )}
 
-      {/* Bottom-sheet popup lives in the Courses tab only */}
-      <IncomingRequestPopup
+      {/* Floating island popup lives in the Courses tab only */}
+      <IncomingRequestIsland
         request={displayedRequest}
         onAccept={accept}
         onDecline={decline}
