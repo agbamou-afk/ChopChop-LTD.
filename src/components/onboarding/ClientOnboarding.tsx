@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import logo from "@/assets/logo.png";
 import { useLowDataMode } from "@/hooks/useLowDataMode";
+import { Analytics } from "@/lib/analytics/AnalyticsService";
 
 interface Props {
   onDone: () => void;
@@ -242,11 +243,28 @@ export function ClientOnboarding({ onDone }: Props) {
     return () => { document.body.style.overflow = prev; };
   }, []);
 
+  useEffect(() => {
+    Analytics.track("onboarding.viewed");
+  }, []);
+
+  useEffect(() => {
+    Analytics.track("onboarding.step.viewed", {
+      metadata: { step: index, key: SCENES[index].key },
+    });
+  }, [index]);
+
   const next = () => {
-    if (isLast) onDone();
-    else setIndex((i) => i + 1);
+    if (isLast) {
+      Analytics.track("onboarding.completed", { metadata: { steps: SCENES.length } });
+      onDone();
+    } else setIndex((i) => i + 1);
   };
   const prev = () => setIndex((i) => Math.max(0, i - 1));
+
+  const skip = () => {
+    Analytics.track("onboarding.skipped", { metadata: { at_step: index, key: SCENES[index].key } });
+    onDone();
+  };
 
   const dots = useMemo(() => SCENES.map((_, i) => i), []);
 
@@ -263,7 +281,7 @@ export function ClientOnboarding({ onDone }: Props) {
       <div className="flex items-center justify-end px-4 pt-[max(1rem,env(safe-area-inset-top))]">
         {isLast ? (
           <button
-            onClick={onDone}
+            onClick={skip}
             className="inline-flex items-center justify-center w-10 h-10 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
             aria-label="Fermer"
           >
