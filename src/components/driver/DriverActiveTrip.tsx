@@ -15,7 +15,7 @@ import { DriverTripReceipt } from "./DriverTripReceipt";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
-  Phone, Navigation, CheckCircle2, AlertTriangle, X, Loader2, MapPin, Flag, QrCode, ExternalLink, Crosshair,
+  Phone, Navigation, CheckCircle2, AlertTriangle, X, Loader2, MapPin, Flag, QrCode, ExternalLink, Crosshair, ArrowRight,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -165,6 +165,14 @@ export function DriverActiveTrip({ rideId, onClose }: Props) {
     }
     if (phase === "on_trip" || phase === "at_destination") setQrOpen(false);
   }, [phase, pickupCode]);
+
+  // Defensive guard: if anything desyncs (refresh, tab switch, server-side
+  // pickup confirm), make sure the QR sheet never lingers when phase is no
+  // longer "arrived". Also closes when ride.status transitions to in_progress.
+  useEffect(() => {
+    if (qrOpen && phase !== "arrived") setQrOpen(false);
+    if (qrOpen && ride?.status === "in_progress") setQrOpen(false);
+  }, [qrOpen, phase, ride?.status]);
 
   // Rotate the QR token every 30 seconds while the popup is visible
   useEffect(() => {
